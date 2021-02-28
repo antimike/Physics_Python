@@ -1,7 +1,6 @@
 from pint import UnitRegistry
 
 ureg = UnitRegistry()
-_ = ureg
 
 def unitless(num):
     return ureg.Quantity(num, '')
@@ -49,3 +48,6 @@ e_0_ = 8.854e-12*ureg.meter**-3*ureg.second**4*ureg.ampere**2/ureg.kilogram
 # Permeability of free space
 # Units: m*kg*s**-2*A**-2
 mu_0_ = 1.2566e-6*ureg.meter*ureg.kilogram/(ureg.second**2*ureg.ampere**2)
+
+# Automatically build "conversion graph" for constants of different dimensions related by fundmental equations (e.g., energy and frequency)
+# How to store a graph in Python?
