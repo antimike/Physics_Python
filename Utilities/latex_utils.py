@@ -74,3 +74,6 @@ def tabularize_data(*data_arrs, **kwargs):
 def typeset_answer(qty, **kwargs):
     digits = kwargs.get('digits', 5)
     return '{:Lx}'.format((qty.magnitude).n(digits=digits)*qty.units)
+
+def bold(str):
+    return r"\textbf{" + str + r"}"
