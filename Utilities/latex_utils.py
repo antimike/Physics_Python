@@ -75,5 +75,38 @@ def typeset_answer(qty, **kwargs):
     digits = kwargs.get('digits', 5)
     return '{:Lx}'.format((qty.magnitude).n(digits=digits)*qty.units)
 
+@accept_lists
+@convert_args(str)
 def bold(str):
     return r"\textbf{" + str + r"}"
+
+@accept_lists
+@convert_args(str)
+def math(str):
+    return r"$" + str + r"$"
+
+def accept_lists(fn):
+    def wrapper(arg):
+        if isinstance(arg, list):
+            return [fn(elem) for elem in arg]
+        else:
+            return fn(arg)
+    return wrapper
+
+def convert_args(converter):
+    def decorator(fn):
+        def wrapper(*args, **kwargs):
+            return fn(
+                *[converter(arg) for arg in args],
+                **{key: converter(val) for key, val in kwargs}
+            )
+        return wrapper
+    return decorator
+
+# Not sure if this is a rabbit-hole worth diving into
+class expr:
+    def __init__(self, *args):
+        self._str = ''
+    def bold(self):
+        return r"\mathbf{" + self._str + r"}"
+
