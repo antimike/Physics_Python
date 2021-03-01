@@ -50,22 +50,6 @@ epsilon_0 = 8.854e-12*ureg.meter**-3*ureg.second**4*ureg.ampere**2/ureg.kilogram
 # Units: m*kg*s**-2*A**-2
 mu_0 = 1.2566e-6*ureg.meter*ureg.kilogram/(ureg.second**2*ureg.ampere**2)
 
-class Data_Serializer:
-    def __init__(self, **opts):
-        self._opts = opts
-    def print(self, datum):
-        return Data_Serializer.serialize(datum, **self._opts)
-    @staticmethod
-    def serialize(datum, transformation=lambda x: x, units=None, show_units=True, digits=5):
-        datum = transformation(datum)
-        if units is None:
-            datum = datum.to_base_units()
-            units = datum.units
-        else:
-            datum = datum.to(units)
-        if not show_units:
-            datum /= 1.0*units
-        return '{:Lx}'.format(datum.magnitude.n(digits=digits)*datum.units)
 
 
 
