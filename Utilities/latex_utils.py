@@ -85,6 +85,24 @@ def bold(str):
 def math(str):
     return r"$" + str + r"$"
 
+def paragraphs_from_file(stream, delimiter='\n'):
+    lines = []
+    for line in stream:
+        if line == delimiter and lines:
+            yield lines
+            lines = []
+        else:
+            lines.append(line.rstrip())
+    yield lines
+
+def get_cols(file):
+    with open(file, mode='r') as f:
+        return list(paragraphs_from_file(f))
+
+def test_paragraph_serialization():
+    filename = './testfile.txt'
+    cols = get_cols(filename)
+
 def accept_lists(fn):
     def wrapper(arg):
         if isinstance(arg, list):
