@@ -50,9 +50,69 @@ epsilon_0 = 8.854e-12*ureg.meter**-3*ureg.second**4*ureg.ampere**2/ureg.kilogram
 # Units: m*kg*s**-2*A**-2
 mu_0 = 1.2566e-6*ureg.meter*ureg.kilogram/(ureg.second**2*ureg.ampere**2)
 
+class Data_Serializer:
+    def __init__(self, **opts):
+        self._opts = opts
+    def print(self, datum):
+        return Data_Serializer.serialize(datum, **self._opts)
+    @staticmethod
+    def serialize(datum, transformation=lambda x: x, units=None, show_units=True, digits=5):
+        datum = transformation(datum)
+        if units is None:
+            datum = datum.to_base_units()
+            units = datum.units
+        else:
+            datum = datum.to(units)
+        if not show_units:
+            datum /= 1.0*units
+        return '{:Lx}'.format(datum.magnitude.n(digits=digits)*datum.units)
+
+
+
+
+
+
+
+class Table:
+    class Column:
+        def __init__(self, ureg, none_char, show_units=True, show_title_units=False):
+            self._ureg = ureg
+            self._units = self._ureg.dimensionless
+            self._title = ''
+            self._data = []
+            self._none_char = none_char
+            self._show_units = show_units
+            self._show_title_units = show_title_units
+        @property
+        def units(self):
+            return self._units
+        @property
+        def title(self):
+            return self._title
+
+    def __init__(self):
+        self._str = ''
+        self._num_cols = 0
+        self._num_rows = 0
+        self._title = ''
+    def add_columns(self, *cols, **kwargs):
+        self._str += tabularize_columns(*cols)
+    def add_rows(self, *rows, **kwargs):
+        pass
+    @property
+    def latex(self):
+        return self._str
+
+def stringify_array(arr):
+    return map(lambda x: str(x), arr)
+
+@convert_args(stringify_array)
+def tabularize_rows(*rows):
+    return r" \\ ".join([r" & ".join(row) for row in rows])
+
+@convert_args(stringify_array)
 def tabularize_columns(*cols):
-    stringed_arrs = map(lambda arr: map(lambda x: str(x), arr), cols)
-    return r" \\ ".join([r" & ".join(tuple) for tuple in zip(*stringed_arrs)])
+    return r" \\ ".join([r" & ".join(tuple) for tuple in zip(*cols)])
 
 def start_tablestr(title, col_titles):
     latex = [r"\begin{tabular}{|" + len(col_titles)*r"c|" + r"} "]
