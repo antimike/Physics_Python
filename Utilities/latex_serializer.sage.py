@@ -9,10 +9,22 @@ def apply_defaults(fn):
         return fn(obj, *args, **{**obj._opts, **kwargs})
     return wrapper
 
-def serialize(fn):
+def serialize_args(fn):
     def wrapper(obj, *args, **kwargs):
         return fn(obj, *(obj._serializer.serialize(*args, **kwargs)), **kwargs)
     return wrapper
+
+def serialize(projection, inclusion):
+    def decorator(fn):
+        def wrapper(instance, *args, **kwargs):
+            return fn(
+                instance,
+                *inclusion(instance._serializer.serialize(*projection(args), **kwargs), args),
+                **kwargs
+            )
+        return wrapper
+    return decorator
+
 class Latex_Serializer:
     text_transformations = {
         'bold': lambda x: r"\B{" + str(x) + r"}",
@@ -155,7 +167,7 @@ class Table:
         self._rows = []
         self._has_row_titles = False
     # TODO: Fix the way this is padding the column titles list (doesn't properly account for multicols)
-    @serialize
+    @serialize_args
     @apply_defaults
     def add_columns(self, *cols, **kwargs):
         if 'col_title' in kwargs and len(cols) > _sage_const_0 :
@@ -169,7 +181,7 @@ class Table:
         old_cols += cols
         self._rows = Table.transpose(old_cols, len(self._rows), placeholder=kwargs['placeholder'])
         self._update_num_cols(lambda x: x + len(cols), **kwargs)
-    @serialize
+    @serialize_args
     @apply_defaults
     def add_rows(self, *rows, **kwargs):
         cols = Table.transpose(rows, self._num_cols, placeholder=kwargs['placeholder'])
@@ -189,7 +201,9 @@ class Table:
             cols.insert(_sage_const_0 , ['']*len(rows))
         self._update_num_cols(lambda x: max(len(cols), x), **kwargs)
         self._rows += Table.transpose(cols, len(rows), placeholder=kwargs['placeholder'])
-    @serialize
+    # @serialize_args
+    @serialize(lambda pairs: [t for t, n in pairs],
+               lambda titles, pairs: [(t, n) for t, (_, n) in zip(titles, pairs)])
     @apply_defaults
     def add_column_titles(self, *col_titles, **kwargs):
         self._col_titles = [Table.title_row(*pair) for pair in col_titles]

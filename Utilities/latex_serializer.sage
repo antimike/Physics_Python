@@ -1,13 +1,24 @@
-
 def apply_defaults(fn):
     def wrapper(obj, *args, **kwargs):
         return fn(obj, *args, **{**obj._opts, **kwargs})
     return wrapper
 
-def serialize(fn):
+def serialize_args(fn):
     def wrapper(obj, *args, **kwargs):
         return fn(obj, *(obj._serializer.serialize(*args, **kwargs)), **kwargs)
     return wrapper
+
+def serialize(projection, inclusion):
+    def decorator(fn):
+        def wrapper(instance, *args, **kwargs):
+            return fn(
+                instance,
+                *inclusion(instance._serializer.serialize(*projection(args), **kwargs), args),
+                **kwargs
+            )
+        return wrapper
+    return decorator
+
 class Latex_Serializer:
     text_transformations = {
         'bold': lambda x: r"\B{" + str(x) + r"}",
@@ -122,7 +133,7 @@ class Table:
             multicol = r"\multicolumn{" + str(num_cols) + r"}{c}{" + title + r"}"
         else:
             multicol = ''
-        return [multicol]
+        return multicol
     @staticmethod
     def pad_arrs(arrs, min_length, placeholder='-'):
         if len(arrs) == 0:
@@ -150,21 +161,23 @@ class Table:
         self._rows = []
         self._has_row_titles = False
     # TODO: Fix the way this is padding the column titles list (doesn't properly account for multicols)
-    @serialize
+    @serialize_args
     @apply_defaults
     def add_columns(self, *cols, **kwargs):
         if 'col_title' in kwargs and len(cols) > 0:
             col_title_opts = {**kwargs, **kwargs['col_title_opts']}
             self._col_titles = Table.pad_arrs([self._col_titles], self._num_cols, placeholder='')[0]
-            self._col_titles += Table.title_row(
-                *(self._serializer.serialize(kwargs['col_title'], **col_title_opts),
-                len(cols))
+            self._col_titles.append(
+                Table.title_row(
+                    self._serializer.serialize(kwargs['col_title'], **col_title_opts),
+                    len(cols)
+                )
             )
         old_cols = Table.transpose(self._rows, self._num_cols, placeholder=kwargs['placeholder'])
         old_cols += cols
         self._rows = Table.transpose(old_cols, len(self._rows), placeholder=kwargs['placeholder'])
         self._update_num_cols(lambda x: x + len(cols), **kwargs)
-    @serialize
+    @serialize_args
     @apply_defaults
     def add_rows(self, *rows, **kwargs):
         cols = Table.transpose(rows, self._num_cols, placeholder=kwargs['placeholder'])
@@ -184,11 +197,12 @@ class Table:
             cols.insert(0, ['']*len(rows))
         self._update_num_cols(lambda x: max(len(cols), x), **kwargs)
         self._rows += Table.transpose(cols, len(rows), placeholder=kwargs['placeholder'])
-    @serialize
+    @serialize(lambda pairs: [t for t, n in pairs],
+               lambda titles, pairs: [(t, n) for t, (_, n) in zip(titles, pairs)])
     @apply_defaults
     def add_column_titles(self, *col_titles, **kwargs):
         self._col_titles = [Table.title_row(*pair) for pair in col_titles]
-        num_cols = sum([pair[1] for pair in col_titles])
+        num_cols = sum([n for t, n in col_titles])
         self._update_num_cols(lambda x: max(x, num_cols), **kwargs)
         Table.pad_arrs([self._col_titles], self._num_cols, placeholder='')[0]
     def add_vline(self):
