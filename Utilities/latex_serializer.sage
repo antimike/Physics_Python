@@ -3,6 +3,42 @@ def apply_defaults(fn):
         return fn(obj, *args, **{**obj._opts, **kwargs})
     return wrapper
 
+@bind_args(compose_reducers)
+def bind_kwargs(*reducers):
+    # reducer = lambda instance, reducers, kwargs: 
+    def decorator(fn):
+        def wrapper(instance, *args, **kwargs):
+            return fn(instance, *args, reducer(instance, kwargs))
+        return wrapper
+    return decorator
+
+# A reducer f: (S, S) -> S can be "lifted" to a function (S, S) -> (S, S) in three ways.
+# Two ways are "conservative:" (S_1, S_2) |-> (S_1, r(S_1, S_2)) and the adjoint, each of which fixes one of the subdomains.
+# The difference between these two can be thought of as "immediate state update" (right arg fixed, left mutable) and "accumulated state update deferred" (left arg fixed representing the state to be updated; right arg mutable)
+# The other is "forgetful:" (S_1, S_2) |-> (S_2, r(S_1, S_2))
+
+def deferred
+
+def right_compose_reducers(reducers):
+    def reducer(first, second):
+        for r in reducers:
+
+
+def bind_args(reducer):
+    def decorator(fn):
+        def wrapper(instance, *args, **kwargs):
+            return fn(instance, *reducer(instance, args), kwargs)
+        return wrapper
+    return decorator
+
+def reduce_data_opts(table, opts):
+    return {**table._opts, **opts}
+
+def reduce_col_title_opts(table, opts):
+    data_kwargs = reduce_data_opts(table, opts)
+    col_title_opts = {**table._opts['col_title_opts'], **opts, **opts['col_title_opts']}
+    return {**reduce_data_opts(table, opts), 'col_title_opts': col_title_opts}
+
 def serialize_args(fn):
     def wrapper(obj, *args, **kwargs):
         return fn(obj, *(obj._serializer.serialize(*args, **kwargs)), **kwargs)
@@ -199,12 +235,14 @@ class Table:
         self._rows += Table.transpose(cols, len(rows), placeholder=kwargs['placeholder'])
     @serialize(lambda pairs: [t for t, n in pairs],
                lambda titles, pairs: [(t, n) for t, (_, n) in zip(titles, pairs)])
-    @apply_defaults
+    # @apply_defaults
+    # Unfortunately, the order in which the default kwargs are merged with the passed kwargs is important here and does not agree with the convention used in other class functions
     def add_column_titles(self, *col_titles, **kwargs):
         self._col_titles = [Table.title_row(*pair) for pair in col_titles]
         num_cols = sum([n for t, n in col_titles])
         self._update_num_cols(lambda x: max(x, num_cols), **kwargs)
-        Table.pad_arrs([self._col_titles], self._num_cols, placeholder='')[0]
+        if self._num_cols > num_cols:
+            self._col_titles = Table.pad_arrs(self._col_titles, self._num_cols)
     def add_vline(self):
         self._col_structure.append('|')
     def add_hline(self):
