@@ -112,6 +112,59 @@ def bind_kwargs(*reducers):
         return wrapper
     return decorator
 
+# Related classes:
+# - State
+# - Hamiltonian_State
+class Observable:
+    def __init__(self, manifold):
+        self._manifold = states
+    @property
+    def manifold(self):
+    # The set from which this observable takes values.
+        return self._manifold
+
+# For now, doesn't expose anything fancy like "contra-" or "covariant" Booleans, or type-checks
+# Eventual goal: wire up support for explicit Domain, Codomain, etc. to allow more rigorous type-checking
+# Possibly implement an unchecked base class and a more "rigorous" derived class
+# For checking functional properties like commutativity, we need to make some assumptions about the algebraic structures of the Domain and Codomain, so this will have to be limited to derived classes like Linear_Reducer (e.g.)
+# Additional possibilities: 
+# - pair (member function that provides an explicit construction to pair a state with an update into a properly-formed argument for the reducer)
+# - get_state, get_update (projection functions; see previous)
+# - "Passive" and "Active" derived classes, depending on whether the logic of composition is implemented through modified projectors (i.e., modified Domain/Codomain) or a modified internal reducer
+class Reducer:
+    def __init__(self, fn):
+        self._reducer = fn
+        self._get_state = lambda pair: pair[0]
+        self._get_update = lambda pair: pair[1]
+        self._pair = lambda state, update: (state, update)
+        self._adjoint = Reducer(lambda state, update: self._reducer(update, state))
+    # def reduce(contravariant, covariant):
+    def reduce(state, update):
+        return self._reducer(state, update)
+    # TODO: Replace with Haskell-like point-free implementation based on functional "pair"
+    @property
+    def adjoint(self):
+        return self._adjoint
+    def left_pseudolift(self):
+        return lambda pair: self._pair(self._reducer(**pair), self._get_state(pair))
+    def right_pseudolift(self):
+        pass
+    def forgetful_pseudolift(self):
+        pass
+    def compose_eager(self, second):
+        return lambda state, update: second(self._reducer(state, update), update)
+    def compose_deferred(self, second):
+        return lambda state, update: second(state, self._reducer(state, update))
+    def compose_forgetful(self, second):
+        return lambda state, update: second(update, self._reducer(state, update))
+    def __add__(first, second):
+        pass
+
+# A decorator that functions as a container for reducers
+class Redecorator:
+    def __init__(self, *reducers):
+        self._reducer = sum(reducers)
+
 # A reducer f: (S, S) -> S can be "lifted" to a function (S, S) -> (S, S) in three obvious ways.
 # Two ways are "conservative:" (S_1, S_2) |-> (S_1, r(S_1, S_2)) and the adjoint, each of which fixes one of the subdomains.
 # The difference between these two can be thought of as "immediate state update" (right arg fixed, left mutable) and "accumulated state update deferred" (left arg fixed representing the state to be updated; right arg mutable)
@@ -145,6 +198,49 @@ def bind_kwargs(*reducers):
 * skew-semilift
 * contra-/co-variance
 """
+
+class Class_Decorator:
+    def __init__(self, *args, **kwargs):
+        pass
+    def __call__(arg):
+        pass
+    def __getattribute__(self, name):
+        try:
+            pass
+        except AttributeError:
+            pass
+        else:
+            pass
+
+class Data_Context:
+    def __get__(self, obj, objtype=None):
+        raise NotImplementedError
+    def __set__(self, obj, val):
+        raise NotImplementedError
+    def __set_name__(self, owner, name):
+        raise NotImplementedError
+
+
+class View(ABC):
+    pass
+
+class Serializable(ABC):
+    pass
+
+class Model(ABC):
+    pass
+
+
+
+
+@bind_method_args
+@contextual
+class Element:
+    @classmethod
+    @cached_property
+
+
+
 
 def right_compose_reducers(reducers):
     def reducer(first, second):
