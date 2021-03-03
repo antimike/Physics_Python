@@ -1,3 +1,26 @@
+#Problems:
+#    - "Default opts" logic
+#        - Different for different functions
+#        - Generally handled by reducers
+#        - Differences are generally limited to composition order
+#    - "Context" logic (e.g., loading data)
+#    - Preprocessing arguments, fetched data, and defaults
+#        - e.g., units
+#    - "General function" definitions:
+#        - Which should be declared static and which should just be declared as lone functions?
+
+#Possible solutions:
+#    - Inheritance
+#    - Decorators:
+#        - Function decorators (e.g., reducers)
+#        - Class decorators
+#    - Managed attributes:
+#        - Properties
+#        - Descriptors
+#        - @cached_property
+#    - Class methods @classmethod:
+#        - Can dynamically update (applicable to all instances!)
+
 def apply_defaults(fn):
     def wrapper(obj, *args, **kwargs):
         return fn(obj, *args, **{**obj._opts, **kwargs})
