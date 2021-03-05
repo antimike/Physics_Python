@@ -119,7 +119,7 @@ class Table:
         num_cols = sum([n for t, n in col_titles])
         self._update_num_cols(lambda x: max(x, num_cols), **kwargs)
         if self._num_cols > num_cols:
-            self._col_titles = Table.pad_arrs(self._col_titles, self._num_cols)
+            self._col_titles = Table.pad_arrs([self._col_titles], self._num_cols, placeholder='')
     def add_vline(self):
         self._col_structure.append('|')
     def add_hline(self):
@@ -127,10 +127,12 @@ class Table:
     # Shouldn't need to apply defaults to private methods
     def _update_num_cols(self, update_fn, **kwargs):
         result = update_fn(self._num_cols)
+        delm = kwargs.get('delimiter', self._opts['delimiter'])
+        align = kwargs.get('alignment', self._opts['alignment'])
         change = result - self._num_cols
         if self._num_cols > 0 and change > 0:
-            self._col_structure.append(delm := kwargs.get('delimiter', self._opts['delimiter']))
-        self._col_structure.append(delm.join([kwargs['alignment']]*change))
+            self._col_structure.append(delm)
+        self._col_structure.append(delm.join(align*change))
         self._num_cols = result
     def _add_title_column(self):
         placeholder = self._opts['placeholder']
