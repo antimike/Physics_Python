@@ -40,13 +40,56 @@ def unscramble(predicate, args, debug=False):
         print('-----' + str(args))
     return args
 
+def iterates(function):
+    """Returns an infinite iterator containing all the iterates of fn"""
+    ret = function
+    while True:
+        yield ret
+        ret = lambda x: function(ret(x))
+
+def orbit(val, fn):
+    """Infinite iterator containing the orbit of `val` under application of `fn`"""
+    history = {curr := val}
+    while (new := fn(curr := val)) not in (history := history | {val}):
+        yield (curr, val := new)[0]
+    yield curr
+
+def hailstone_fn(n):
+    return n//2 if n%2 == 0 else 3*n + 1
+
+def print_hailstone_graph(n):
+    for m in orbit(n, hailstone_fn):
+        print(m*'X')
+
+for n in orbit(9, hailstone_fn):
+    print(n)
+
+print_hailstone_graph(19)
+
 
 def test_unscramble(q, predicate, debug=False, max_iterations=100):
-    print(q)
+    max_iterations = min(max_iterations, len(q))
+    for i, func in enumerate(iterates(lambda val: scramble(predicate, val))) if i < max_iterations:
+    iterations = 0
+    # orbit = ((lambda fn, arg: fn(fn, arg))(lambda fn, arg
+    # orbit = (q); orbit = (
+    def print_status():
+        initial_msg = "Original:"
+        final_msg = "Final:"
+        if iterations == max_iterations:
+            msg = final_msg
+        elif iterations == 0:
+            msg = initial_msg
+        else:
+            msg = "<{:d}>:".format(iterations)
+        print(msg.center(len(initial_msg), ' '), q)
+    def next():
+        qs = scramble(predicate, q)
+        iterations += 1
+    print_status()
     qs = scramble(predicate, q)
-    iterations = 1
     while (not qs == q) and iterations < min(len(q), max_iterations):
-        print(qs)
+        print_status()
         qs = unscramble(predicate, qs, debug=debug)
         iterations += 1
     if qs == q:
