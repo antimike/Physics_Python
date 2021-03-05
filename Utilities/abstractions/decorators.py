@@ -90,11 +90,8 @@ def bind_args(reducer):
         return wrapper
     return decorator
 
-def none_check(default_val, *vals):
-    return [v if v is None else default_val for v in vals]
-
-
-
+# def none_check(default_val, *vals):
+    # return [v if v is None else default_val for v in vals]
 
 def decorate_methods(*decorators):
     """A class decorator which applies the passed list of
