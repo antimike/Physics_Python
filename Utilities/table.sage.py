@@ -5,8 +5,90 @@ from sage.all_cmdline import *   # import sage library
 
 _sage_const_1 = Integer(1); _sage_const_0 = Integer(0)
 import latex_serializer as tex
+import abc
+
+# class Stateful(abc.ABC):
+    # def __init__(self, *args, **kwargs):
+        # self.state = lambda reducer: reducer(*args, **kwargs)
+    # @property
+    # def state(self):
+        # return self._state
+    # @state.setter
+    # @abc.abstractmethod
+    # def state(self, val):
+        # pass
+
+# class Configured(abc.ABC):
+    # def __init__(self, *args, **kwargs):
+        # pass
+    # def merge_config:
+        # pass
+
+"""
+Alternatives:
+    - Descriptor
+How to support multiple merge strategies?
+table._conf(**kwargs)
+
+@configure
+@serialize
+inner_func(self, *s_args, **s_kwargs):
+    do_stuff()
+
+"""
+class Configuration(abc.ABC):
+    def __call__(self, *args, **kwargs):
+        """Allows config objects to be called like functions
+        Returns a new config object merged from the original and
+        the passed arguments"""
+        # return self + cls(*args, **kwargs)
+        return self.merge(self, *args, **kwargs)
+    @classmethod
+    @abc.abstractmethod
+    def merge(cls, instance, *args, **kwargs):
+        pass
+    def __add__(self, other):
+        """The default merge strategy for configuration instances"""
+        return
+    @abc.abstractmethod
+    def __sub__(self, other):
+        """Compute the difference between two configuration instances"""
+        pass
+
+# def decorate_methods(*decorators):
+    # total = lambda fn: fn
+    # while len(decorators) > 0:
+        # last = decorators.pop()
+        # total = lambda fn: last(total(fn))
+    # def class_decorator(Cls):
+        # class Cls_Wrapper(object):
+            # def __init__(self, *args, **kwargs):
+                # self._inner_instance = Cls(*args, **kwargs)
+            # def __getattribute__(self, s):
+                # try:
+                    # ret = super(Cls_Wrapper, self).__getattribute__(s)
+                # except AttributeError:
+                    # pass
+                # else:
+                    # return ret
+                # ret = self._inner_instance.__getattribute__(s)
+                # if type(ret) == type(self.__init__):
+                    # return total(ret)
+                # else:
+                    # return ret
+        # return Cls_Wrapper
+    # return class_decorator
+
+
+class View(abc.ABC):
+    def _serialize_args(self, proj, reducer, *args, **kwargs):
+        pass
+    def __init__(self, **kwargs):
+        self._serializer = tex.Latex_Serializer(**kwargs)
 
 class Table:
+    # def _serialize_args(self, proj, reducer, *args, **kwargs):
+        # self._serializer(
     defaults = {
         'delimiter': '|',
         'placeholder': '-',
