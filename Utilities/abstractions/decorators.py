@@ -162,8 +162,8 @@ class Test_Case:
         """Fetches logged data from latest test run"""
         return self._history[-1] if self._history else None
     @latest.setter
-    """Appends new history item"""
     def update(self, logged_results):
+        """Appends new history item"""
         self._history.append(logged_results)
 
 
