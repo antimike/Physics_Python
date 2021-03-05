@@ -27,7 +27,6 @@ def scramble(predicate, args):
     unselected = [x for i, x in enumerate(args) if not predicate(i)]
     return [*selected, *unselected]
 
-
 def unscramble(predicate, args, debug=False):
     args.reverse()
     if debug:
@@ -47,12 +46,14 @@ def iterates(function):
         yield ret
         ret = lambda x: function(ret(x))
 
-def orbit(val, fn):
+def orbit(val, fn, stop_condition=lambda x: False):
     """Infinite iterator containing the orbit of `val` under application of `fn`"""
     history = {curr := val}
-    while (new := fn(curr := val)) not in (history := history | {val}):
+    while (new := fn(curr := val)) not in (history := history | {val}) and not stop_condition(new):
         yield (curr, val := new)[0]
     yield curr
+
+# TESTS
 
 def hailstone_fn(n):
     return n//2 if n%2 == 0 else 3*n + 1
@@ -66,42 +67,25 @@ for n in orbit(9, hailstone_fn):
 
 print_hailstone_graph(19)
 
+def test_unscramble(seq, pred, debug=False, max_iterations=100):
+    max_iterations = min(max_iterations, len(seq))
+    pred, seq = lambda x:x >= 4, [*range(1, 27)]
+    images = orbit(
+        scramble(pred, seq),
+        lambda x: unscramble(pred, x, debug=debug),
+        stop_condition=lambda x: x == seq
+    )
+    def get_msg(num, result):
+        msg = (initial := 'Original: ') and not num or '<{:d}>: '
+        return msg.format(num).center(len(initial)) + str(result)
+    for msg in [get_msg(i, x) for i, x in enumerate(images) if i < max_iterations]:
+        print(msg)
 
-def test_unscramble(q, predicate, debug=False, max_iterations=100):
-    max_iterations = min(max_iterations, len(q))
-    for i, func in enumerate(iterates(lambda val: scramble(predicate, val))) if i < max_iterations:
-    iterations = 0
-    # orbit = ((lambda fn, arg: fn(fn, arg))(lambda fn, arg
-    # orbit = (q); orbit = (
-    def print_status():
-        initial_msg = "Original:"
-        final_msg = "Final:"
-        if iterations == max_iterations:
-            msg = final_msg
-        elif iterations == 0:
-            msg = initial_msg
-        else:
-            msg = "<{:d}>:".format(iterations)
-        print(msg.center(len(initial_msg), ' '), q)
-    def next():
-        qs = scramble(predicate, q)
-        iterations += 1
-    print_status()
-    qs = scramble(predicate, q)
-    while (not qs == q) and iterations < min(len(q), max_iterations):
-        print_status()
-        qs = unscramble(predicate, qs, debug=debug)
-        iterations += 1
-    if qs == q:
-        print('It took {:d} iteration(s) to reconstruct the original list.'.format(iterations))
-    else:
-        print('Failed to reconstruct the original list.  Ran for {:d} iterations.'.format(iterations))
-        print('Final state:')
-        print('{:s}'.format(str(qs)))
 
 
 
 test_unscramble([*range(5)], lambda x: x == 0 or x == 3, debug=True)
+
 
 def test_slice(total_length, slice_length):
     q = [*range(total_length)]
