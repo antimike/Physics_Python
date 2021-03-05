@@ -49,30 +49,6 @@ class Configuration(abc.ABC):
         """Compute the difference between two configuration instances"""
         pass
 
-def decorate_methods(*decorators):
-    total = lambda fn: fn
-    while len(decorators) > 0:
-        last = decorators.pop()
-        total = lambda fn: last(total(fn))
-    def class_decorator(Cls):
-        class Cls_Wrapper(object):
-            def __init__(self, *args, **kwargs):
-                self._inner_instance = Cls(*args, **kwargs)
-            def __getattribute__(self, s):
-                try:
-                    ret = super(Cls_Wrapper, self).__getattribute__(s)
-                except AttributeError:
-                    pass
-                else:
-                    return ret
-                ret = self._inner_instance.__getattribute__(s)
-                if type(ret) == type(self.__init__):
-                    return total(ret)
-                else:
-                    return ret
-        return Cls_Wrapper
-    return class_decorator
-
 
 class View(abc.ABC):
     def _serialize_args(self, proj, reducer, *args, **kwargs):
