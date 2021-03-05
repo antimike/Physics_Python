@@ -81,8 +81,8 @@ class View(abc.ABC):
         self._serializer = tex.Latex_Serializer(**kwargs)
 
 class Table:
-    def _serialize_args(self, proj, reducer, *args, **kwargs):
-        self._serializer(
+    # def _serialize_args(self, proj, reducer, *args, **kwargs):
+        # self._serializer(
     defaults = {
         'delimiter': '|',
         'placeholder': '-',
