@@ -129,8 +129,8 @@ class Table:
         result = update_fn(self._num_cols)
         change = result - self._num_cols
         if self._num_cols > 0 and change > 0:
-            self._col_structure.append(kwargs['delimiter'])
-        self._col_structure.append(kwargs['delimiter'].join([kwargs['alignment']]*change))
+            self._col_structure.append(delm := kwargs.get('delimiter', self._opts['delimiter']))
+        self._col_structure.append(delm.join([kwargs['alignment']]*change))
         self._num_cols = result
     def _add_title_column(self):
         placeholder = self._opts['placeholder']
