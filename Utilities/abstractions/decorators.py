@@ -119,6 +119,18 @@ def decorate_methods(*decorators):
         return Cls_Wrapper
     return class_decorator
 
+class Testable:
+    def __init__(self, obj, test_cases):
+        self._obj = obj
+        self._test_cases = test_cases
+    def __call__(self, *args, **kwargs):
+        if callable(self._obj):
+            return self._obj(*args, **kwargs)
+        else:
+            raise NotImplementedError
+    def _test(self, *test_cases):
+        for case in self._test_cases + test_cases:
+            pass
 
 # A reducer f: (S, S) -> S can be "lifted" to a function (S, S) -> (S, S) in three ways.
 # Two ways are "conservative:" (S_1, S_2) |-> (S_1, r(S_1, S_2)) and the adjoint, each of which fixes one of the subdomains.
