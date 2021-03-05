@@ -31,14 +31,6 @@ def take(collection, n):
 # [x if test(i) 
 
 
-"""
-How to invert a boolean sort (subset selection) of a list:
-first = [x for test(x) and x in l]
-second = [x for not test(x) and x in l]
-reconstructed = first + second
-original = (reverse + split(test) + reverse)(reconstructed)
-"""
-
 identity = lambda x: x
 none_check = lambda default, proj=identity: replace_args(lambda x: x is not None, default)
 
