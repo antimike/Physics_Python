@@ -132,6 +132,42 @@ class Testable:
         for case in self._test_cases + test_cases:
             pass
 
+class Test_Case:
+    default_opts = { }
+    def _default_logger(self, args, kwargs, val, result, exs):
+        self._history.push(
+            {'args': args, 'kwargs': kwargs, 'returned': val, 'passed': result, 'exceptions': exs}
+        )
+    def __init__(self, testable, passed_args, passed_kwargs, assertion, **opts):
+        self._testable = testable
+        self._args, self._kwargs = passed_args, passed_kwargs
+        self._assertion = assertion
+        self._logger = self._default_logger
+        self._opts = {**default_opts, **opts}
+        self._history = []
+    def run(self):
+        raise NotImplementedError
+    @property
+    def args(self):
+        return self._args
+    @property
+    def kwargs(self):
+        return self._kwargs
+    @property
+    def history(self):
+        """Fetches complete testing history since instantiation"""
+        return self._history
+    @property
+    def latest(self):
+        """Fetches logged data from latest test run"""
+        return self._history[-1] if self._history else None
+    @latest.setter
+    """Appends new history item"""
+    def update(self, logged_results):
+        self._history.append(logged_results)
+
+
+
 # A reducer f: (S, S) -> S can be "lifted" to a function (S, S) -> (S, S) in three ways.
 # Two ways are "conservative:" (S_1, S_2) |-> (S_1, r(S_1, S_2)) and the adjoint, each of which fixes one of the subdomains.
 # The difference between these two can be thought of as "immediate state update" (right arg fixed, left mutable) and "accumulated state update deferred" (left arg fixed representing the state to be updated; right arg mutable)
