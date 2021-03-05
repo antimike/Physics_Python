@@ -24,6 +24,8 @@ Possible solutions:
 """
 class preprocessor:
     default_reducers = [
+        serialize_args(
+            lambda 
     ]
     @staticmethod
     def 
@@ -50,12 +52,14 @@ def reduce_col_title_opts(table, opts):
         # return fn(obj, *(obj._serializer.serialize(*args, **kwargs)), **kwargs)
     # return wrapper
 
-def serialize_args(serialize_from_args, args_from_serialized, opts_from_kwargs):
+
+def serialize_args(get_serializer, get_text, get_args, get_opts):
     def decorator(fn):
-        def wrapper(instance, *args, **kwargs):
+        def wrapper(*args, **kwargs):
+            serializer = get_serializer(*args, **kwargs)
             return fn(
-                instance,
-                *args_from_serialized(instance._serializer.serialize(*serialize_from_args(args), **opts_from_(kwargs)), args),
+                first,
+                *get_args(serializer.serialize(*get_text(*args, **kwargs), **get_opts(kwargs)), rest),
                 **kwargs
             )
         return wrapper
