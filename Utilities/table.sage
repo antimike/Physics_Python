@@ -50,7 +50,7 @@ class Table:
     @staticmethod
     def pad_arrs(arrs, min_length, placeholder='-'):
         if len(arrs) == 0:
-            return []
+            return arrs
         l = max(min_length, Table._safe_max_length(arrs))
         return [arr + [placeholder]*(l - len(arr)) for arr in arrs]
     @staticmethod
