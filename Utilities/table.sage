@@ -94,6 +94,8 @@ class Table:
     @tex.apply_defaults
     def add_rows(self, *rows, **kwargs):
         cols = Table.transpose(rows, self._num_cols, placeholder=kwargs['placeholder'])
+        # NOTE: This call has to occur before the 'row_title' logic, since the row title adds a spurious increment to the column count
+        self._update_num_cols(lambda x: max(len(cols), x), **kwargs)
         if 'row_title' in kwargs:
             row_title_opts = {**kwargs, **kwargs['row_title_opts']}
             cols.insert(
@@ -108,7 +110,6 @@ class Table:
             self._has_row_titles = True
         elif self._has_row_titles:
             cols.insert(0, ['']*len(rows))
-        self._update_num_cols(lambda x: max(len(cols), x), **kwargs)
         self._rows += Table.transpose(cols, len(rows), placeholder=kwargs['placeholder'])
     @tex.serialize(lambda pairs: [t for t, n in pairs],
                lambda titles, pairs: [(t, n) for t, (_, n) in zip(titles, pairs)])
