@@ -147,6 +147,7 @@ class Table:
         cols = Table.transpose(self._rows, self._num_cols, placeholder=placeholder)
         cols.insert(0, ['']*len(self._rows))
         self._rows = Table.transpose(cols, self._num_cols, placeholder=placeholder)
+        self._col_structure.insert(0, self._opts['alignment'] + self._opts['delimiter'])
     def _pad_rows(self):
         self._rows = Table.pad_arrs(
             self._rows,
