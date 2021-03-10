@@ -82,7 +82,7 @@ class Table:
             self._col_titles = Table.pad_arrs([self._col_titles], self._num_cols, placeholder='')[0]
             self._col_titles.append(
                 Table.title_row(
-                    self._serializer.serialize(kwargs['col_title'], **col_title_opts),
+                    *self._serializer.serialize(kwargs['col_title'], **col_title_opts),
                     len(cols)
                 )
             )
