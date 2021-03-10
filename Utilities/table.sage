@@ -174,7 +174,7 @@ class Table:
     def _table_title(self):
         latex = [
             r"\multicolumn{" \
-            + str(self._num_cols) \
+            + str(self._num_cols if not self._has_row_titles else self._num_cols + 1) \
             + r"}{" \
             + self._opts['title_left_border'] \
             + self._opts['title_alignment'] \
