@@ -115,7 +115,7 @@ class Table:
             if not self._has_row_titles:
                 self._add_title_column()
             self._has_row_titles = True
-        elif self._has_row_titles:
+        elif self._has_row_titles and len(rows) > 0:
             cols.insert(0, ['']*len(rows))
         self._rows += Table.transpose(cols, len(rows), placeholder=kwargs['placeholder'])
     @tex.serialize(lambda pairs: [t for t, n in pairs],
