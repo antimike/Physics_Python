@@ -41,9 +41,15 @@ class Table:
         multirow = r"\multirow{" + str(num_rows) + r"}{*}{" + title + r"}"
         return [multirow] + ['']*(num_rows - 1)
     @staticmethod
-    def title_row(title, num_cols):
+    def title_row(title, num_cols, left_delimiter='|', right_delimiter = '|'):
         if num_cols > 0:
-            multicol = r"\multicolumn{" + str(num_cols) + r"}{c}{" + title + r"}"
+            multicol = r"\multicolumn{" \
+                + str(num_cols) \
+                + r"}{" \
+                + left_delimiter \
+                + r"c" \
+                + right_delimiter \
+                + r"}{" + title + r"}"
         else:
             multicol = ''
         return multicol
@@ -83,7 +89,8 @@ class Table:
             self._col_titles.append(
                 Table.title_row(
                     *self._serializer.serialize(kwargs['col_title'], **col_title_opts),
-                    len(cols)
+                    len(cols),
+                    left_delimiter=''
                 )
             )
         old_cols = Table.transpose(self._rows, self._num_cols, placeholder=kwargs['placeholder'])
@@ -116,7 +123,7 @@ class Table:
     # @apply_defaults
     # Unfortunately, the order in which the default kwargs are merged with the passed kwargs is important here and does not agree with the convention used in other class functions
     def add_column_titles(self, *col_titles, **kwargs):
-        self._col_titles = [Table.title_row(*pair) for pair in col_titles]
+        self._col_titles = [Table.title_row(*pair, left_delimiter = '') for pair in col_titles]
         num_cols = sum([n for t, n in col_titles])
         self._update_num_cols(lambda x: max(x, num_cols), **kwargs)
         if self._num_cols > num_cols:
