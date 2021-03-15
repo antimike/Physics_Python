@@ -7,6 +7,7 @@ TODOs:
     * Class methods / statics only where appropriate
     * Use inheritance to separate generic logic from source-specific methods
 """
+random = oo
 class Element:
     @staticmethod
     def get_wavelength(qty):

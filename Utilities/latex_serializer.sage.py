@@ -94,7 +94,10 @@ class Latex_Serializer:
             units = datum.units
             if not kwargs['show_units']:
                 datum /= units
-            ret = '{:Lx}'.format(n(datum.magnitude, digits=kwargs['digits'])*datum.units)
+            if not (size := datum.magnitude) == oo:
+                ret = '{:Lx}'.format(n(size, digits=kwargs['digits'])*datum.units)
+            else:
+                ret = r"$\infty$"
         except AttributeError:
             ret = str(n(datum, digits=kwargs['digits']))
         # for key in Latex_Serializer.text_transformations.keys():
