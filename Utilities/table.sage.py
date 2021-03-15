@@ -161,13 +161,16 @@ class Table:
             placeholder=self._opts['placeholder']
         )
     def _add_hlines(self):
-        positions = self._hlines
-        positions.sort(reverse=True)
-        rows = self._rows
+        # positions = self._hlines
+        # positions.sort(reverse=True)
+        # rows = self._rows
+        # hline = r" \hline "
+        # for pos in positions:
+            # rows.insert(pos, [hline])
+        # return rows
         hline = r" \hline "
-        for pos in positions:
-            rows.insert(pos, [hline])
-        return rows
+        for pos in [p for p in self._hlines if p < len(self._rows)]:
+            self._rows[pos][0] = hline + self._rows[pos][0]
     def _start_table(self):
         latex = [
             r"\begin{tabular}{" \
@@ -210,10 +213,11 @@ class Table:
     @property
     def latex(self):
         self._pad_rows()
-        rows = self._add_hlines()
+        # rows = self._add_hlines()
+        self._add_hlines()
         return self._start_table() \
             + self._table_title() \
             + self._table_col_title_row() \
-            + Table.tabularize_rows(rows) \
+            + Table.tabularize_rows(self._rows) \
             + self._end_table()
 

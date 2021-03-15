@@ -60,7 +60,7 @@ class Table:
         l = max(min_length, Table._safe_max_length(arrs))
         return [arr + [placeholder]*(l - len(arr)) for arr in arrs]
     @staticmethod
-    def transpose(arrs, min_length, placeholder='-'):
+    def transpose(arrs, min_length=0, placeholder='-'):
         arrs = Table.pad_arrs(arrs, min_length, placeholder=placeholder)
         length = Table._safe_max_length(arrs)
         return [[arr[j] for arr in arrs] for j in range(length)]
@@ -155,13 +155,16 @@ class Table:
             placeholder=self._opts['placeholder']
         )
     def _add_hlines(self):
-        positions = self._hlines
-        positions.sort(reverse=True)
-        rows = self._rows
+        #positions = self._hlines
+        #positions.sort(reverse=True)
+        #rows = self._rows
+        #hline = r" \hline "
+        #for pos in positions:
+            #rows.insert(pos, [hline])
+        #return rows
         hline = r" \hline "
-        for pos in positions:
-            rows.insert(pos, [hline])
-        return rows
+        for pos in self._hlines:
+            self._rows[pos][-1] += hline
     def _start_table(self):
         latex = [
             r"\begin{tabular}{" \

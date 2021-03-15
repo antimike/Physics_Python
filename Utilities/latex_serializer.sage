@@ -22,14 +22,14 @@ Possible solutions:
    - Class methods @classmethod:
        - Can dynamically update (applicable to all instances!)
 """
-class preprocessor:
-    default_reducers = [
-    ]
-    @staticmethod
-    def 
-    def __call__(self, *args, **kwargs):
-        pass
-    def __init__(self, reducers=None):
+# class preprocessor:
+    # default_reducers = [
+    # ]
+    # @staticmethod
+    # def 
+    # def __call__(self, *args, **kwargs):
+        # pass
+    # def __init__(self, reducers=None):
 
 
 def apply_defaults(fn):
@@ -45,21 +45,21 @@ def reduce_col_title_opts(table, opts):
     col_title_opts = {**table._opts['col_title_opts'], **opts, **opts['col_title_opts']}
     return {**reduce_data_opts(table, opts), 'col_title_opts': col_title_opts}
 
-# def serialize_args(fn):
-    # def wrapper(obj, *args, **kwargs):
-        # return fn(obj, *(obj._serializer.serialize(*args, **kwargs)), **kwargs)
-    # return wrapper
+def serialize_args(fn):
+    def wrapper(obj, *args, **kwargs):
+        return fn(obj, *(obj._serializer.serialize(*args, **kwargs)), **kwargs)
+    return wrapper
 
-def serialize_args(serialize_from_args, args_from_serialized, opts_from_kwargs):
-    def decorator(fn):
-        def wrapper(instance, *args, **kwargs):
-            return fn(
-                instance,
-                *args_from_serialized(instance._serializer.serialize(*serialize_from_args(args), **opts_from_(kwargs)), args),
-                **kwargs
-            )
-        return wrapper
-    return decorator
+# def serialize_args(serialize_from_args, args_from_serialized, opts_from_kwargs):
+    # def decorator(fn):
+        # def wrapper(instance, *args, **kwargs):
+            # return fn(
+                # instance,
+                # *args_from_serialized(instance._serializer.serialize(*serialize_from_args(args), **opts_from_(kwargs)), args),
+                # **kwargs
+            # )
+        # return wrapper
+    # return decorator
 
 def serialize_kwargs(projection, inclusion):
     def decorator(fn):
@@ -73,9 +73,9 @@ def serialize_kwargs(projection, inclusion):
         return wrapper
     return decorator
 
-- Preprocess:
-    1. Get col_title_opts and row_title_opts; merge into kwargs
-    2. Apply defaults
+# - Preprocess:
+    # 1. Get col_title_opts and row_title_opts; merge into kwargs
+    # 2. Apply defaults
 
 class Latex_Serializer:
     text_transformations = {
@@ -118,7 +118,7 @@ class Latex_Serializer:
                 datum /= units
             ret = '{:Lx}'.format(n(datum.magnitude, digits=kwargs['digits'])*datum.units)
         except AttributeError:
-            ret = str(datum)
+            ret = str(n(datum, digits=kwargs['digits']))
         # for key in Latex_Serializer.text_transformations.keys():
             # if kwargs[key]:
                 # ret = Latex_Serializer.text_transformations[key](ret)

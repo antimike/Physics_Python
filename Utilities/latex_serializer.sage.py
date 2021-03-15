@@ -96,7 +96,7 @@ class Latex_Serializer:
                 datum /= units
             ret = '{:Lx}'.format(n(datum.magnitude, digits=kwargs['digits'])*datum.units)
         except AttributeError:
-            ret = str(datum)
+            ret = str(n(datum, digits=kwargs['digits']))
         # for key in Latex_Serializer.text_transformations.keys():
             # if kwargs[key]:
                 # ret = Latex_Serializer.text_transformations[key](ret)
