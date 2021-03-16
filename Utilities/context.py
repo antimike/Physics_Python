@@ -36,6 +36,69 @@ class Context:
     def add_decorator(self, context_decorator):
         pass
 
+def get_nodes(obj):
+    ret = {}
+    try:
+        for key, val in obj.items():
+            ret[key] = {
+                'FORWARD': set(val.keys()),
+                'BACK': set()
+            }
+            {for node in get_nodes(val)}
+
+class Node:
+    def __init__(self, name):
+        self._name = name
+        self._parents = set()
+        self._children = set()
+    @property
+    def name(self):
+        return self._name
+    @property
+    def parents(self):
+        return self._parents
+    @property
+    def children(self):
+        return self._children
+    # TODO: Consistency checks?
+    def add_parents(self, parents):
+        self._parents |= parents
+    def add_children(self, children):
+        self._children |= children
+
+def get_dict(x, parent):
+    if type(x) is dict:
+        return x
+    else:
+        return {parent: x}
+
+def merge(x, y, parent):
+    # Double 'None' check
+    # Might be better to be explicit
+    if not x and y:
+        return x or y
+    xd, yd = get_dict(x, parent), get_dict(y, parent)
+    # Effectively asserts that the last argument shouldn't matter
+    return deep_merge(xd, yd, None)
+
+def deep_merge(x, y, parent):
+    # Base case
+    if not type(x) is dict and not type(y) is dict:
+        try:
+            return x | y
+        except:
+            return {x, y}
+    # Recursive case
+    elif type(x) is dict and type(y) is dict:
+        return {
+            k: merge(x.get(k), y.get(k), k)
+            for k in x.keys() | y.keys()
+        }
+    # Covers case one or the other is not a dict
+    # Helper function just constructs "leaf dict" to insert into the other
+    else:
+        return merge(x, y, parent)
+
 class Contextual:
     def __init__(self, context, **dependency_dict):
         self._context = context
