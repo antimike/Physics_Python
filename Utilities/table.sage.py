@@ -92,11 +92,12 @@ class Table:
         if 'col_title' in kwargs and len(cols) > _sage_const_0 :
             col_title_opts = {**kwargs, **kwargs['col_title_opts']}
             self._col_titles = Table.pad_arrs([self._col_titles], self._num_cols, placeholder='')[_sage_const_0 ]
+            left_delimiter = '|' if len(self._col_titles) == 0 or self._col_titles[-1] == '' else ''
             self._col_titles.append(
                 Table.title_row(
                     *self._serializer.serialize(kwargs['col_title'], **col_title_opts),
                     len(cols),
-                    left_delimiter=''
+                    left_delimiter=left_delimiter
                 )
             )
         old_cols = Table.transpose(self._rows, self._num_cols, placeholder=kwargs['placeholder'])
