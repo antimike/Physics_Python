@@ -124,8 +124,8 @@ class Table:
         elif self._has_row_titles and len(rows) > _sage_const_0 :
             cols.insert(_sage_const_0 , ['']*len(rows))
         self._rows += Table.transpose(cols, len(rows), placeholder=kwargs['placeholder'])
-    @tex.serialize(lambda pairs: [t for t, n in pairs],
-               lambda titles, pairs: [(t, n) for t, (_, n) in zip(titles, pairs)])
+    @tex.serialize(lambda pairs: [item[0] for item in pairs],
+               lambda titles, pairs: [(item[0], item[1][1]) for item in zip(titles, pairs)])
     # @apply_defaults
     # Unfortunately, the order in which the default kwargs are merged with the passed kwargs is important here and does not agree with the convention used in other class functions
     def add_column_titles(self, *col_titles, **kwargs):
@@ -152,7 +152,7 @@ class Table:
         placeholder = self._opts['placeholder']
         cols = Table.transpose(self._rows, self._num_cols, placeholder=placeholder)
         cols.insert(_sage_const_0 , ['']*len(self._rows))
-        self._rows = Table.transpose(cols, self._num_cols, placeholder=placeholder)
+        self._rows = Table.transpose(cols, len(self._rows), placeholder=placeholder)
         self._col_structure.insert(_sage_const_0 , self._opts['alignment'] + self._opts['delimiter'])
     def _pad_rows(self):
         self._rows = Table.pad_arrs(
