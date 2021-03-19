@@ -56,8 +56,9 @@ def serialize(projection, inclusion):
     return decorator
 
 class Latex_Serializer:
+    # Depends on 'boldify' macro defined in TeX repo
     text_transformations = {
-        'bold': lambda x: r"\B{" + str(x) + r"}",
+        'bold': lambda x: r"\boldify{" + str(x) + r"}",
         'italics': lambda x: r"\emph{" + str(x) + r"}"
     }
     serialization_type_defaults = {
