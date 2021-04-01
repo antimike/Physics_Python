@@ -86,6 +86,23 @@ class Latex_Serializer:
             **Latex_Serializer.serialization_type_defaults,
             **kwargs
         }
+
+    @staticmethod
+    def _units(datum, **kwargs):
+        out_units = kwargs.get('units', None)
+        format_str = r"{:Lx}"
+        try:
+            datum = datum.to_base_units() if out_units == '' else datum.to(out_units)
+        except:
+            pass
+        return format_str.format(datum)
+
+    @staticmethod
+    def _approx(datum, **kwargs):
+        return n(datum, **kwargs)
+    @staticmethod
+    def _apply_math_mode(string, math_mode=(r"$", r"$")):
+        return math_mode[0] + string + math_mode[1]
     @apply_defaults
     def serialize_datum(self, datum, **kwargs):
         datum = kwargs['transformation'](datum)
