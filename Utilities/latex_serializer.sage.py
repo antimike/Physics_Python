@@ -71,11 +71,14 @@ class Latex_Serializer:
         'parenthetical_units': None
     }
     datum_default_opts = {
+        'post': lambda x: x,
+        'pre': lambda x: x,     # Keeping 'transformation' for backwards compatibility
         'transformation': lambda x: x,
         'units': None,
         'show_units': True,
-        'digits': _sage_const_5 
+        'digits': _sage_const_5
     }
+
     def __init__(self, **kwargs):
         self._opts = {
             **Latex_Serializer.datum_default_opts,
@@ -86,6 +89,7 @@ class Latex_Serializer:
     @apply_defaults
     def serialize_datum(self, datum, **kwargs):
         datum = kwargs['transformation'](datum)
+        datum = kwargs['pre'](datum)
         ret = ''
         try:
             if kwargs['units'] is None:
@@ -107,7 +111,7 @@ class Latex_Serializer:
         # for key in Latex_Serializer.text_transformations.keys():
             # if kwargs[key]:
                 # ret = Latex_Serializer.text_transformations[key](ret)
-        return ret
+        return kwargs['post'](ret)
     @apply_defaults
     def serialize_text(self, arg, **kwargs):
         string = str(arg)
