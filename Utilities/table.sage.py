@@ -104,6 +104,15 @@ class Table:
         old_cols += cols
         self._rows = Table.transpose(old_cols, len(self._rows), placeholder=kwargs['placeholder'])
         self._update_num_cols(lambda x: x + len(cols), **kwargs)
+    def add_titled_rows(self, row_dict, **kwargs):
+        """add_titled_rows.
+        Temporary hack to allow passing titled rows as dicts (which should have been the signature all along anyway)
+
+        :param row_dict:
+        :param kwargs:
+        """
+        for title, row in row_dict.item():
+            self.add_rows(row, **{**kwargs, 'row_title': title})
     @tex.serialize_args
     @tex.apply_defaults
     def add_rows(self, *rows, **kwargs):
