@@ -76,7 +76,9 @@ class Latex_Serializer:
         'transformation': lambda x: x,
         'units': None,
         'show_units': True,
-        'digits': _sage_const_5
+        'digits': _sage_const_5,
+        'tex': True,
+        'math_mode': (r"$", r"$")
     }
 
     def __init__(self, **kwargs):
@@ -108,27 +110,33 @@ class Latex_Serializer:
         datum = kwargs['transformation'](datum)
         datum = kwargs['pre'](datum)
         ret = ''
-        try:
-            if kwargs['units'] is None:
-                datum = datum.to_base_units()
-            else:
-                datum = datum.to(kwargs['units'])
-            units = datum.units
-            if not kwargs['show_units']:
-                datum /= units
-            if not (size := datum.magnitude) == oo:
-                ret = '{:Lx}'.format(n(size, digits=kwargs['digits'])*datum.units)
-            else:
-                ret = r"$\infty$"
-        except AttributeError:
+        if kwargs['tex'] or kwargs['math_mode']:
             try:
-                ret = str(n(datum, digits=kwargs['digits'])) if not datum == oo else r"$\infty$"
-            except:
-                ret = str(latex(datum))
+                if kwargs['units'] is None:
+                    datum = datum.to_base_units()
+                else:
+                    datum = datum.to(kwargs['units'])
+                units = datum.units
+                if not kwargs['show_units']:
+                    datum /= units
+                if not (size := datum.magnitude) == oo:
+                    ret = '{:Lx}'.format(n(size, digits=kwargs['digits'])*datum.units)
+                else:
+                    ret = r"$\infty$"
+            except AttributeError:
+                try:
+                    if kwargs['digits']:
+                        ret = latex(n(datum, digits=kwargs['digits'])) if not datum == oo else r"$\infty$"
+                    else:
+                        ret = latex(datum)
+                except:
+                    ret = latex(datum)
+        else:
+            pass
         # for key in Latex_Serializer.text_transformations.keys():
             # if kwargs[key]:
                 # ret = Latex_Serializer.text_transformations[key](ret)
-        return kwargs['post'](ret)
+        return Latex_Serializer._apply_math_mode(kwargs['post'](ret), math_mode=kwargs['math_mode'])
     @apply_defaults
     def serialize_text(self, arg, **kwargs):
         string = str(arg)
