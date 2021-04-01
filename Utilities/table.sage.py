@@ -85,6 +85,21 @@ class Table:
         self._col_titles = []
         self._rows = []
         self._has_row_titles = False
+    def add_titled_cols(self, col_dict, **kwargs):
+        """add_titled_cols.
+        Temporary hack to allow passing titled cols as dicts (which should have been the signature all along anyway)
+
+        :param col_dict:
+        :param kwargs:
+        """
+        for title, col in col_dict.items():
+            self.add_cols(
+                col if isinstance(col, list) else list(col),
+                **{**kwargs, 'col_title': title}
+            )
+    def add_cols(self, *args, **kwargs):
+        return self.add_columns(*args, **kwargs)
+
     # TODO: Fix the way this is padding the column titles list (doesn't properly account for multicols)
     @tex.serialize_args
     @tex.apply_defaults
@@ -111,8 +126,11 @@ class Table:
         :param row_dict:
         :param kwargs:
         """
-        for title, row in row_dict.item():
-            self.add_rows(row, **{**kwargs, 'row_title': title})
+        for title, row in row_dict.items():
+            self.add_rows(
+                row if isinstance(row, list) else list(row),
+                **{**kwargs, 'row_title': title}
+            )
     @tex.serialize_args
     @tex.apply_defaults
     def add_rows(self, *rows, **kwargs):
