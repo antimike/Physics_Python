@@ -107,7 +107,7 @@ class Latex_Serializer:
             try:
                 ret = str(n(datum, digits=kwargs['digits'])) if not datum == oo else r"$\infty$"
             except:
-                ret = str(datum)
+                ret = str(latex(datum))
         # for key in Latex_Serializer.text_transformations.keys():
             # if kwargs[key]:
                 # ret = Latex_Serializer.text_transformations[key](ret)
