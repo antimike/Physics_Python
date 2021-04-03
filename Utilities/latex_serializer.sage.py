@@ -43,7 +43,8 @@ class Latex_Serializer:
     }
     serialization_type_defaults = {
         'text': True,
-        'data': False
+        'data': False,
+        'expression_parser': latex
     }
     text_default_opts = {
         'bold': False,
@@ -110,7 +111,7 @@ class Latex_Serializer:
                 else:
                     ret = r"$\infty$"
             except AttributeError:
-                ret = latex(datum)
+                ret = kwargs['expression_parser'](datum)
         else:
             pass
         return Latex_Serializer._apply_math_mode(kwargs['post'](ret), math_mode=kwargs['math_mode'])
