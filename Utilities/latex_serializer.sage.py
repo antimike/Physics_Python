@@ -109,6 +109,12 @@ class Latex_Serializer:
     def serialize_datum(self, datum, **kwargs):
         datum = kwargs['transformation'](datum)
         datum = kwargs['pre'](datum)
+        if kwargs['digits'] and kwargs['approximate']:
+            # try/except to deal with cases like \infty
+            try:
+                datum = n(datum, digits=kwargs['digits'])
+            except:
+                pass
         ret = ''
         if kwargs['tex'] or kwargs['math_mode']:
             try:
@@ -120,22 +126,13 @@ class Latex_Serializer:
                 if not kwargs['show_units']:
                     datum /= units
                 if not (size := datum.magnitude) == oo:
-                    ret = '{:Lx}'.format(n(size, digits=kwargs['digits'])*datum.units)
+                    ret = '{:Lx}'.format(size*datum.units)
                 else:
                     ret = r"$\infty$"
             except AttributeError:
-                try:
-                    if kwargs['digits']:
-                        ret = latex(n(datum, digits=kwargs['digits'])) if not datum == oo else r"$\infty$"
-                    else:
-                        ret = latex(datum)
-                except:
-                    ret = latex(datum)
+                ret = latex(datum)
         else:
             pass
-        # for key in Latex_Serializer.text_transformations.keys():
-            # if kwargs[key]:
-                # ret = Latex_Serializer.text_transformations[key](ret)
         return Latex_Serializer._apply_math_mode(kwargs['post'](ret), math_mode=kwargs['math_mode'])
     @apply_defaults
     def serialize_text(self, arg, **kwargs):
