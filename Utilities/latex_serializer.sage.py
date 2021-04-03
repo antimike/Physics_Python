@@ -156,3 +156,5 @@ class Latex_Serializer:
                 arg = self.serialize_text(arg, **kwargs)
             return arg
 
+#TODO Use query.sage to add generic serialization functions that consume nested dicts of options
+#For example: Use query's `deep_get` to determine correct opts to apply to each serialized object
