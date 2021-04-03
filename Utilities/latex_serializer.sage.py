@@ -58,6 +58,7 @@ class Latex_Serializer:
         'units': None,
         'show_units': True,
         'digits': _sage_const_5,
+        'approximate': True,
         'tex': True,
         'math_mode': (r"$", r"$")
     }
