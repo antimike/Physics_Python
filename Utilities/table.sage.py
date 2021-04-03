@@ -93,9 +93,13 @@ class Table:
         :param kwargs:
         """
         for title, col in col_dict.items():
+            try:
+                col_opts = kwargs.get('col_opts', {}).get(title, {})
+            except:
+                col_opts = {}
             self.add_cols(
                 col if isinstance(col, list) else list(col),
-                **{**kwargs, 'col_title': title}
+                **{**kwargs, 'col_title': title, **col_opts}
             )
     def add_cols(self, *args, **kwargs):
         return self.add_columns(*args, **kwargs)
