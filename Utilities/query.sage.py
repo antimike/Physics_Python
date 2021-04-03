@@ -14,7 +14,10 @@ def evaluate_query(param, thunk, recalculate=False, **kwargs):
       for k, v in thunk.items()
     }
   elif callable(thunk):
-    return thunk(param)
+    try:
+      return thunk(param)
+    except:
+      return None
   else:
     return thunk
 
