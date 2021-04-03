@@ -52,5 +52,9 @@ def prettify(expr, prod_symbol=r'\,'):
             res += prettify(term, prod_symbol) + op # ...then recursively call prettify() on each term and append the operator (this will produce an extra operator.)
     return res[:len(res)-1] # Since there is an extra operator, return all, except the last character.
 
-expr = 3/7*sqrt(2)*sqrt(pi)*(5)^(8/7) + 2
-show(LatexExpr(prettify(expr)))
+def prettifier(prod_symbol=r'\,'):
+    return lambda expr: prettify(expr, prod_symbol)
+
+#TODO Add facilities for dealing with units
+#expr = 3/7*sqrt(2)*sqrt(pi)*(5)^(8/7) + 2
+#show(LatexExpr(prettify(expr)))
