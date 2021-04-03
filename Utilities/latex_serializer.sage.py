@@ -59,6 +59,7 @@ class Latex_Serializer:
         'show_units': True,
         'digits': _sage_const_5,
         'approximate': True,
+        'exact_constants': {0, 1, pi, e},
         'tex': True,
         'math_mode': (r"$", r"$")
     }
@@ -87,11 +88,14 @@ class Latex_Serializer:
     @staticmethod
     def _apply_math_mode(string, math_mode=(r"$", r"$")):
         return math_mode[0] + string + math_mode[1]
+    def _is_exact_constant(self, val, **kwargs):
+        vals = {'magnitude': lambda x: x.magnitude, 'expression': lambda x: x}
+        return not set(kwargs['exact_constants']).isdisjoint(query.evaluate_query(val, vals).values())
     @apply_defaults
     def serialize_datum(self, datum, **kwargs):
         datum = kwargs['transformation'](datum)
         datum = kwargs['pre'](datum)
-        if kwargs['digits'] and kwargs['approximate']:
+        if kwargs['digits'] and kwargs['approximate'] and not self._is_exact_constant(datum, **kwargs):
             # try/except to deal with cases like \infty
             try:
                 datum = n(datum, digits=kwargs['digits'])
