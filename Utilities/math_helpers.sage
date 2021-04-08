@@ -1,3 +1,4 @@
+from collections import namedtuple
 from sage.manifolds.operators import *
 from sage.manifolds.catalog import Sphere
 from scipy import special as fns
@@ -152,16 +153,20 @@ def full_angular_integral(angular_fn):
 
 def surface_integral_scalar(scalar, bounds):
   manifold = scalar._manifold
-  chart = _get_chart(set(bounds.keys()), manifold)
+  chart, coords = _get_chart(bounds.keys(), manifold)
   vol_element = manifold.volume_form().comp(chart.frame())[1, 2, 3]
-  ret = (scalar*vol_element)(manifold.point(
+  ret = (scalar*vol_element)(manifold.point(coords), chart=chart)
   for var, bound in bounds.items():
-    if isinstance(bound, list):
+    if isinstance(bound, list) or isinstance(bound, tuple):
       ret = integral(ret, var, *bound)
     else:
-      
+      ret = ret.subs(var==bound)
+  return ret
 
-  pass
+test_scalar = EEE.scalar_field(x^2 + y^2 + z^2, chart=cart)
+surface_integral_scalar(test_scalar, cart_bounds)
+cart_bounds = {x: [1, 2], y: [-2, 2], z: 4}
+set(cart_bounds.keys())
 
 def volume_integral():
   pass
@@ -209,23 +214,115 @@ def _catch_NameError(fn):
       import sys
       raise NameError(str(e) + ' Perhaps try calling math_helpers.initialize_EM_variables()?').with_traceback(sys.exec_info()[2])
 
-def _get_chart(coords, manifold):
+def print_msgs(*strings, prefix='\t', level=0, abort=True):
+  if abort:
+    return
+  for string in strings:
+    print(prefix*level + string)
+
+#debug_msg(*strings, 
+
+def _debug(func_name='', msgs={}):
+  _debugger = Debugger(func_name, msgs)
+  def __debug(fn):
+    def wrapped(*args, **kwargs, debug=False, debug_level=0):
+      _debugger.enter(debug=debug, level=level, args=args, kwargs=kwargs)
+      ret = fn(*args, **kwargs, debugger=_debugger)
+      _debugger.end(ret)
+    return wrapped
+  return __debug(fn)
+
+class Debugger():
+  def _out(self, **kwargs):
+    for msg, params in kwargs.items():
+      msg = self._debug_msgs.get(msg)
+      if msg is None:
+        print('Debug message with key {} not found!'.format(str(msg)))
+      elif callable(msg):
+        try:
+          print(msg(params))
+        except:
+          print('Your debug message "{}" failed to print with params "{}"'.format(str(msg), str(params)))
+      else:
+        print(str(msg) + str(params))
+
+  @property
+  def context(self):
+    return self._debug_action if self._debug else self._do_nothing
+  def _prepare_state(self, args, kwargs, debug_level):
+    if self._debug:
+      self._msg_count = 0
+  def enter(self, debug=False, debug_level=0, args=None, kwargs=None):
+    self._debug = debug
+    self._debug_level = debug_level
+    self._prepare_state(args, kwargs, debug_level)
+  def end(self, return_val):
+    self._print_msg('return')
+  def __init__(self, func_name, **kwargs):
+    self._func_name = func_name
+    self._debug = False
+    self._actions = kwargs
+  #def _parse_kwargs(self, kwargs):
+    #for term in kwargs:
+  def _perform_debug_action(self, action):
+    if not self._debug:
+      return
+
+format_string = '{} {}'*var
+format_string.format('boopy', 'shadoopy')
+
+@debug(out='{} {}', recurse={'increment': lambda x: x + 1, 'decrement': lambda x: x + 1})
+state(recursion_depth.increment())
+log()
+pause()
+#trigger.recurse(
+with dbg.
+
+# Dot-chaining!
+
+{
+  'break': '-'*25,
+  'level': lambda l: 'Level of recursion: {}'.format(l),
+  'State': lambda o, u, _u: 'State: ordered = {}, unordered = {}, _unordered = {}'.format(o, u, _u),
+  'Testing': lambda o, u: 'Testing: ordered = {}, unordered = {}'.format(o, u),
+  '
+
+def _get_chart(coords, manifold, debugger=None):
+  level = 0
   def _get_chart_recursive(ordered, unordered):
+    level = len(ordered)
     _unordered = set(unordered)
-    chart = None
-    while chart is None and unordered:
-      coord = unordered.pop()
-      chart = _test([*ordered, coord], _unordered.difference({coord}))
-    return chart
+    ret = None
+    while ret is None and unordered:
+      first_arg = ordered + [coord := unordered.pop()]
+      second_arg = _unordered.difference({coord})
+      print_msgs('-'*25+'', 'Level of recursion: {}'.format(len(ordered)),
+            'State: ordered = {}, unordered = {}, _unordered = {}'.format(ordered, unordered, _unordered),
+            'Testing: ordered = {}, unordered = {}'.format(first_arg, second_arg),
+            '-'*25+'', level=level, abort=not debug)
+      ret = _test(
+        first_arg,
+        second_arg)
+      print_msgs('-'*25+'', 'Returning to level: {}'.format(len(ordered)),
+            'Found: {}'.format(str(ret)),
+            '-'*25+'', level=level, abort=not debug)
+    return ret
   def _test(ordered, unordered):
-    if len(unordered) == 1:
-      string = ' '.join(map(str, ordered.append(unordered.pop()))).strip()
+    if len(unordered) == 0:
       try:
-        return manifold.get_chart(string)
+        string = ' '.join(map(str, ordered)).strip()
+        print_msgs('Testing {} from ordering {}'.format(string, str(ordered)), level=level, abort=not debug)
+        ret = (manifold.get_chart(string), ordered)
+        print_msgs('Found: {}'.format(str(ret)), level=level, abort=not debug)
       except KeyError:
+        print_msgs('Not found!', level=level, abort=not debug)
         return None
     else:
+      print_msgs('Received ordered = {}, unordered = {}; recursing further'.format(str(ordered), str(unordered)), level=level, abort=not debug)
       return _get_chart_recursive(ordered, unordered)
-  return _get_chart_recursive([], coords)
+  return {
+    'chart': found[0],
+    'coords': found[1]
+  } if (found := _get_chart_recursive([], set(coords))) and found[0] else None
 
-_get_chart({z, x, y}, EEE)
+chart_test = _get_chart({y, x, z}, EEE, debug=True)
