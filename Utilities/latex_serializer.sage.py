@@ -61,7 +61,11 @@ class Latex_Serializer:
         'approximate': True,
         'exact_constants': {0, 1, pi, e},
         'tex': True,
-        'math_mode': (r"$", r"$")
+        'math_mode': (r"$", r"$"),
+        'value_extractors': {
+            'magnitude': lambda x: x.magnitude,
+            'expression': lambda x: x
+        }
     }
 
     def __init__(self, **kwargs):
@@ -89,7 +93,7 @@ class Latex_Serializer:
     def _apply_math_mode(string, math_mode=(r"$", r"$")):
         return math_mode[0] + string + math_mode[1]
     def _is_exact_constant(self, val, **kwargs):
-        vals = {'magnitude': lambda x: x.magnitude, 'expression': lambda x: x}
+        vals = kwargs['value_extractors']
         return not set(kwargs['exact_constants']).isdisjoint(query.evaluate_query(val, vals).values())
     @apply_defaults
     def serialize_datum(self, datum, **kwargs):
