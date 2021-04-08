@@ -207,6 +207,11 @@ def scalar_potential(A, B):
 # Helper functions (internal)
 
 def _catch_NameError(fn):
+  """_catch_NameError.
+  Helper function/decorator to provide a helpful hint on any NameErrors thrown by functions that rely on specific variables (e.g., E, Z, B, c, k, etc.)
+
+  :param fn: Function to decorate
+  """
   def wrapper(*args, **kwargs):
     try:
       fn(*args, **kwargs)
