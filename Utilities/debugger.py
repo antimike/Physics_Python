@@ -5,12 +5,12 @@ from collections import namedtuple
 def _debug(func_name='', msgs={}):
     _debugger = Debugger(func_name, msgs)
     def __debug(fn):
-        def wrapped(*args, **kwargs, debug=False, debug_level=0):
+        def wrapped(*args, debug=False, debug_level=0, **kwargs):
             _debugger.enter(debug=debug, level=level, args=args, kwargs=kwargs)
             ret = fn(*args, **kwargs, debugger=_debugger)
             _debugger.end(ret)
-    return wrapped
-return __debug(fn)
+        return wrapped
+    return __debug(fn)
 
 class Debugger():
     def __init__(self):
@@ -21,7 +21,7 @@ class Debugger():
 
 """
 Plan:
-
+* Class decorator
 """
 # Experiment: Class decorators
 
