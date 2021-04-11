@@ -4,11 +4,27 @@ from collections import namedtuple
 from contextlib import contextmanager
 
 def debug(alias='dbg', **kwargs):
+    """debug.
+    Decorator that returns a callable instance of class Debugger.
+    The basic idea is that the returned instance will be injected into itself as a parameter whose name is provided by the 'alias' parameter.  For example, if alias='dbg', the decorated function will have access to a parameter named 'dbg', which will in turn have access to all class and instance methodsd of the underlying Debugger object.
+
+    :param alias: Name of the parameter to use for injecting the Debugger instance into the function call.
+    :param kwargs: Parameters to pass to the Debugger constructor (e.g., names and values of debug template strings, state variables, state reducers, etc.)
+    """
     def decorate(fn):
         return Debugger(fn, alias=alias, **kwargs)
     return decorate
 
 def pass_when(predicate, default_func=None, default_val=None):
+    """pass_when.
+    Decorator intended to "neuter" a class method given a certain (boolean) condition.
+    The use-case it was designed for is in the Debugger class:  When an instance's 'debug' property is 'False', decorated methods will effectively become no-ops.
+    Needs significant refactoring to be useful in a wider context.
+
+    :param predicate: Boolean function of the decorated function's first argument, which is assumed to be a class instance (i.e., this function is designed to be applied to class methods).  Can be non-callable as well, in which case it is simply evaluated for truthiness.  If 'True' or truthy, the decorated function will simply return a default.
+    :param default_func: Function of the decorated function's first argument, which as above is assumed to be an instance of a class.  Should return a default, which will be returned by the decorated function if the 'predicate' is truthy.  Unlike 'predicate', this argument is assumed callable.  This is because frequently, even in cases where a static (i.e., non-parameterizable) default is desirable, that default will *itself* be callable, rendering the kind of simple logic used around the 'predicate' buggy.
+    :param default_val: An alternative to default_func which provides a static (non-parameterizable) default value to return if 'predicate' is truthy.  If both arguments are provided, default_val takes precedence and no exception is thrown.
+    """
     def decorate(fn):
         def wrapped(*args, **kwargs):
             obj = args[0] if len(args) else None
@@ -27,6 +43,8 @@ def pass_when(predicate, default_func=None, default_val=None):
     return decorate
 
 class Debugger:
+    """Debugger."""
+
     _pass_predicate = lambda obj: not obj.active
     _pass_default = lambda obj: obj
     _active_ = None
