@@ -1,74 +1,180 @@
 from abc import *
 from functools import abstractmethod
 from collections import namedtuple
+from contextlib import contextmanager
 
-def _debug(func_name='', msgs={}):
-    _debugger = Debugger(func_name, msgs)
-    def __debug(fn):
-        def wrapped(*args, debug=False, debug_level=0, **kwargs):
-            _debugger.enter(debug=debug, level=level, args=args, kwargs=kwargs)
-            ret = fn(*args, **kwargs, debugger=_debugger)
-            _debugger.end(ret)
-        return wrapped
-    return __debug(fn)
+def debug(alias='dbg', **kwargs):
+    def decorate(fn):
+        return Debugger(fn, alias=alias, **kwargs)
+    return decorate
 
-class Debugger():
-    def __init__(self):
-        pass
-    @abstractmethod
-    def run(self):
-        pass
-
-"""
-Plan:
-* Class decorator
-"""
-# Experiment: Class decorators
-
-
-
-# Previous attempts
-class Debugger():
-    def _out(self, **kwargs):
-        for msg, params in kwargs.items():
-            msg = self._debug_msgs.get(msg)
-            if msg is None:
-                print('Debug message with key {} not found!'.format(str(msg)))
-            elif callable(msg):
-            try:
-                print(msg(params))
-            except:
-                print('Your debug message "{}" failed to print with params "{}"'.format(str(msg), str(params)))
+def pass_when(predicate, default_func=None, default_val=None):
+    def decorate(fn):
+        def wrapped(*args, **kwargs):
+            obj = args[0] if len(args) else None
+            truthy = (callable(predicate) and predicate(obj)) or (not callable(predicate) and predicate)
+            if truthy:
+                print('YOU SHALL NOT PASS')
+                if default_val:
+                    return default_val
+                elif callable(default_func):
+                    return default_func(obj)
+                else:
+                    return default_val
             else:
-                print(str(msg) + str(params))
+                return fn(*args, **kwargs)
+        return wrapped
+    return decorate
 
-          @property
-          def context(self):
-              return self._debug_action if self._debug else self._do_nothing
-  def _prepare_state(self, args, kwargs, debug_level):
-      if self._debug:
-          self._msg_count = 0
-          def enter(self, debug=False, debug_level=0, args=None, kwargs=None):
-              self._debug = debug
-    self._debug_level = debug_level
-    self._prepare_state(args, kwargs, debug_level)
-    def end(self, return_val):
-        self._print_msg('return')
-        def __init__(self, func_name, **kwargs):
-            self._func_name = func_name
-    self._debug = False
-    self._actions = kwargs
-    def _perform_debug_action(self, action):
-        if not self._debug:
-            return
-  def create_namedtuple(d):
-      for k, v in d.items():
+class Debugger:
+    _pass_predicate = lambda obj: not obj.active
+    _pass_default = lambda obj: obj
+    _active_ = None
+    _props = {
+        'assert_equals': '{} = {}'
+    }
+    _state = {
+        'indent': 0,
+        'prefix': '',
+        'tab': '\t'
+    }
+    @staticmethod
+    def activate(debugger):
+        Debugger._active_ = debugger
+        debugger.active = True
+    @staticmethod
+    def deactivate(debugger):
+        Debugger._active_ = None
+        debugger.active = False
+    @staticmethod
+    def debug(*args, **kwargs):
+        if Debugger._active_ is None:
+            pass
+        else:
+            try:
+                Debugger._active_._debug(*args, **kwargs)
+            except:
+                pass
+    def _reporter(self, template):
+        @pass_when(Debugger._pass_predicate, default_func=Debugger._pass_default)
+        def wrapped(obj, *args, **kwargs):
+            obj._update_state(**kwargs)
+            obj._print(template.format(*args, **self.state))
+            return obj
+        return lambda *args, **kwargs: wrapped(self, *args, **kwargs)
+    def _reducer(self, prop_name, func=None):
+        @pass_when(Debugger._pass_predicate, default_func=Debugger._pass_default)
+        def fixed_func_reducer(obj, _prop_name, *args, **kwargs):
+            update = kwargs | {_prop_name: func(self._get_state_variable(_prop_name), *args, **kwargs)}
+            obj._update_state(**update)
+            return obj
+        @pass_when(Debugger._pass_predicate, default_func=Debugger._pass_default)
+        def variable_func_reducer(obj, *args, **kwargs):
+            update = {}
+            obj._update_state(**kwargs)
+            if len(args) and (first := args[0] or kwargs.get('func')) and callable(first):
+                update[prop_name] = first(obj._get_state_variable(prop_name), *args[1:], **kwargs)
+            elif len(args) > 0:
+                update[prop_name] = first
+            else:
+                obj.print_state(prop_name)
+            obj._update_state(**update)
+            return obj
+        ret = fixed_func_reducer if callable(func) else variable_func_reducer
+        return lambda *args, **kwargs: ret(self, *args, **kwargs)
+    def _update_state(self, **kwargs):
+        self._state |= kwargs
+    def __init__(self, fn, **props):
+        self._alias = props.get('alias')
+        self.active = False
+        self._wrapped = fn
+        self._props |= props
+        self._create_debug_methods()
+        self._create_state_methods()
+    @pass_when(_pass_predicate, default_func=_pass_default)
+    def print_state(self, name):
+        self.assert_equals(name, self._get_state_variable(name))
+        return self
+    def _create_debug_methods(self):
+        for name, prop in self._props.items():
+            if isinstance(prop, str):
+                self.__dict__[name] = self._reporter(prop)
+            elif callable(prop):
+                self.__dict__[name] = self._reducer(name, func=prop)
+            else:
+                self._state[name] = prop
+    def _create_state_methods(self):
+        for name, val in self._state.items():
+            self.__dict__[name] = self._reducer(name)
+    @property
+    def state(self):
+        return {name: self._get_state_variable(name) for name in self._state.keys()}
+    def _get_state_variable(self, name):
+        possible_thunk = self._state.get(name)
+        if callable(possible_thunk):
+            try:
+                return possible_thunk(**self._state)
+            except:
+                return possible_thunk(self._state)
+        elif (redirect := self._state.get(possible_thunk)) and not self._state[possible_thunk] == name:
+            return self._get_state_variable(possible_thunk)
+        else:
+            return possible_thunk
+    @property
+    def _indent(self):
+        return self._get_state_variable('indent')
+    @property
+    def _tab(self):
+        return self._get_state_variable('tab')
+    @property
+    def _prefix(self):
+        return self._get_state_variable('prefix')
+    def _print(self, *args):
+        print(*[self._indent*self._tab + self._prefix
+               + str(arg) for arg in args])
+    def _debug(self, *args):
+        if len(args) > 0:
+            if callable(prop := self.__dict__.get(arg[0])):
+                prop(*args[1:])
+            elif prop:
+                self.print_state(prop)
+            elif isinstance(arg[0], str):
+                self._print(arg[0].format(*args[1:]))
+            elif (var := self._state.get(arg[0])):
+                self.print_state(var)
+            else:
+                pass
+        else:
+            pass
+    def __call__(self, *args, debug=False, **kwargs):
+        if not self.active:
+            if debug:
+                Debugger.activate(self)
+            kwargs |= {self._alias: self}
+            ret = self._wrapped(*args, **kwargs)
+            Debugger.deactivate(self)
+            return ret
+        else:
+            pass
 
-          class TestClass(object):
-              pass
-obj = TestClass()
-obj.__dict__ |= {'a': 1, 'b': 2}
-obj.a
+@debug(alias='db', test='{} is {}', level=1)
+def test_fn(a, b, db=None):
+    db.indent(2).test('this', 'awesome').level(1)
+    print(str(a) + ' ' + str(b))
 
-@debug(out='{} {}', recurse={'increment': lambda x: x + 1, 'decrement': lambda x: x + 1})
-state(recursion_depth.increment())
+test_fn.active
+test_fn('this', 'awesome', debug=True)
+test_fn._wrapped('hello', 'world')
+
+test_fn('hello', 'world', debug=True)
+test_fn.active
+Debugger._pass_predicate(test_fn)
+dbg = Debugger(test_fn, test='{} is {}', level=1)
+dbg.test('boopy', 'shadoopy').level()()
+dbg.print_state('indent')()
+dbg.level()()
+dbg.indent(lambda s: lambda state: state['level'])
+dbg.tab(10*'-')
+dbg.indent()()
+dbg.test('First', 'second', indent=1, tab='-----')()
+dbg.test
