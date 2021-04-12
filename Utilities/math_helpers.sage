@@ -46,7 +46,7 @@ def initialize_EM_variables(subs=None):
     return subs
 
 Fields = namedtuple('Fields', ['E', 'H'])
-Multipole = namedtuple('Multipole', ['l', 'm', 'a_E', 'a_M'])
+Multipole = namedtuple('Multipole', ['l', 'm', 'a_E', 'a_M', 'fields'])
 
 # Variable definitions
 
