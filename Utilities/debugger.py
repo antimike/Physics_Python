@@ -103,6 +103,9 @@ class Debugger:
         return lambda *args, **kwargs: ret(self, *args, **kwargs)
     def _update_state(self, **kwargs):
         self._state |= kwargs
+    def _set_help_info(self):
+        self.__doc__ = self._wrapped.__doc__
+        self.__name__ = self._wrapped.__name__
     def __init__(self, fn, **props):
         if fn is None:
             fn = lambda *args, **kwargs: None
@@ -112,6 +115,7 @@ class Debugger:
         self._props |= props
         self._create_debug_methods()
         self._create_state_methods()
+        self._set_help_info()
     @pass_when(_pass_predicate, default_func=_pass_default)
     def print_state(self, name):
         self.assert_equals(name, self._get_state_variable(name))
