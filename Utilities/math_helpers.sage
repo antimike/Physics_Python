@@ -165,22 +165,92 @@ def X_lm_jackson(l, m):
     """
     return 1/sqrt(l*(l+1))*L_operator(Y_lm_jackson(l, m))
 
-def a_lm_E_long_wavelength(l, m, Q):
+def a_lm_E_long_wavelength(l, m, Q, Q_induced=0):
     """a_lm_E_long_wavelength.
-    Compute the multipole coefficients a_lm^E as a function of l, m, and the static moments Q.
+    Compute the multipole coefficients a_lm^E as a function of l, m, and the static and induced moments Q and Q_induced.
   See Jackson 9.169.
 
   :param l: Order of the multipole (angular momentum)
   :param m: Order of the multipole (magnetic)
   :param Q: Static multipole moment.  Should include the induced multipole moment due to magnetic induction.
+  :param Q_induced: Electric multipole moment due to magnetic induction (default = 0)
     """
-    return c*k^(l + 2)/(i*factorial2(2*l + 1))*sqrt((l + 1)/l)*Q
+    return c*k^(l + 2)/(i*factorial2(2*l + 1))*sqrt((l + 1)/l)*(Q + Q_induced)
 
 @_catch_NameError
-def E_lm_E_long_wavelength(l, m, a, k=k, Z_0=Z_0):
+def a_lm_M_long_wavelength(l, m, M_current, M_intrinsic):
+    """a_lm_M_long_wavelength.
+    Compute the multipole coefficients a_lm^E as a function of l, m, and the magnetic moments corresponding to currents (M_current) and intrinsic magnetization (M_intrinsic).
+  See Jackson 9.171.
+
+    :param l: Order of the multipole (angular momentum)
+    :param m: Order of the multipole (magnetic)
+    :param M_current: Magnetic multipole moment due to current
+    :param M_intrinsic: Magnetic multipole moment due to intrinsic magnetization
+    """
+    return i*k^(l+2)/factorial2(2*l+1)*sqrt((l+1)/l)*(M_current + M_intrinsic)
+
+@_catch_NameError
+def Q_lm(l, m, charge_density, bounds):
+    """Q_lm.
+    Electric multipole moment due to a static charge distribution in the long-wavelength limit.
+    See Jackson 9.170.
+
+    :param l: Order (angular momentum)
+    :param m: Order (magnetic)
+    :param charge_density: Scalar function describing the charge distribution.  Can be confined to a surface or line if appropriate bounds are used.
+    :param bounds: Bounds describing the extent of the charge distribution.  Can restrict the dimension in the same way that `integral_coord_region` allows.
+    """
+    return integral_coord_region(
+        r^l*hermitian_conjugate(Y_lm_jackson(l, m))*charge_density, bounds)
+
+@_catch_NameError
+def Q_lm_induced(l, m, magnetization, bounds):
+    """Q_lm_induced.
+    Electric multipole moment induced by intrinsic magnetization in the long-wavelength limit.
+    See Jackson 9.170.
+
+    :param l: Order (angular momentum)
+    :param m: Order (magnetic)
+    :param magnetization: Intrinsic magnetization (vector field)
+    :param bounds: Bounds describing the extent of the magnetization.  Can restrict the dimension in the same way that `integral_coord_region` allows.
+    """
+    return -i*k/(c*(l+1))*integral_coord_region(
+        r^l*hermitian_conjugate(Y_lm_jackson(l, m))*div(r_vec.cross(magnetization)), bounds)
+
+@_catch_NameError
+def M_lm_current(l, m, currrent, bounds):
+    """M_lm_current.
+    Magnetic multipole moment caused by a currrent source in the long-wavelength limit.
+    See Jackson 9.172.
+
+    :param l: Order (angular momentum)
+    :param m: Order (magnetic)
+    :param currrent: Current density (vector field)
+    :param bounds: Bounds describing the extent of the current source.  Can restrict the dimension in the same way that `integral_coord_region` allows.
+    """
+    return -1/(l+1)*integral_coord_region(
+        r^l*hermitian_conjugate(Y_lm_jackson(l, m))*div(r_vec.cross(current)), bounds)
+
+@_catch_NameError
+def M_lm_intrinsic(l, m, magnetization, bounds):
+    """M_lm_intrinsic.
+    Magnetic multipole moment caused by intrinsic magnetization in the long-wavelength limit.
+    See Jackson 9.172.
+
+    :param l: Order (angular momentum)
+    :param m: Order (magnetic)
+    :param magnetization: Magnetization density (vector field)
+    :param bounds: Bounds describing the extent of the magnetization.  Can restrict the dimension in the same way that `integral_coord_region` allows.
+    """
+    return -integral_coord_region(
+        r^l*hermitian_conjugate(Y_lm_jackson(l, m))*div(magnetization), bounds)
+
+@_catch_NameError
+def E_lm_E_long_wavelength_expanded(l, m, a, k=k, Z_0=Z_0):
     """E_lm_E_long_wavelength.
-    Electric field of an electric multipole with coefficient a.
-  See Jackson 9.122.
+    Electric field of an outgoing electric multipole with coefficient a.
+    Expanded from the form given in Jackson 9.122.
 
   :param l: Order of the multipole (angular momentum)
   :param m: Order of the multipole (magnetic)
@@ -193,6 +263,24 @@ def E_lm_E_long_wavelength(l, m, a, k=k, Z_0=Z_0):
            - l/(2*l + 1)*k*r*spherical_hankel1(l-1, k*r) + i*spherical_hankel1(l, k*r)) \
           *grad(Y_lm_jackson(l, m)) \
           - i*l*(l+1)/r*spherical_hankel1(l, k*r)*Y_lm_jackson(l, m)*frame_sph[1])
+
+@_catch_NameError
+def H_lm_E_long_wavelength_expanded(l, m, a, E=None, k=k, Z_0=Z_0):
+    """_H_lm_E_long_wavelength.
+    Returns the magnetic multipole field due to an outgoing electric multipole of given order with given coefficient.
+  If optional argument E is provided, computes the result by taking the curl of E.
+    Expanded from the form given in Jackson 9.122.
+
+  :param l: Order of the multipole (angular momentum)
+  :param m: Order of the multipole (magnetic)
+  :param a: Coefficient of the (electric) multipole
+  :param E: (Optional) Electric field of the multipole
+  :param k: (Optional) wavevector of radiation.  If not provided, the variable 'k' is used.
+  :param Z_0: (Optional) wave impedance.  If not provided, the variable 'Z_0' is used.
+    """
+    if E is None:
+        E = E_lm_E_long_wavelength(l, m, a, k=k, Z_0=Z_0)
+    return -i/(k*Z_0)*curl(E)
 
 @_catch_NameError
 def spherical_wavefront(l, outgoing, incoming, k=k):
