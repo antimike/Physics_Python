@@ -17,7 +17,7 @@ def _catch_NameError(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
         try:
-            fn(*args, **kwargs)
+            return fn(*args, **kwargs)
         except NameError as e:
             import sys
             raise NameError(str(e) + ' Perhaps try calling math_helpers.initialize_EM_variables()?').with_traceback(sys.exec_info()[2])
