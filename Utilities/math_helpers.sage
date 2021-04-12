@@ -225,34 +225,12 @@ def integral_coord_region(scalar, bounds):
             ret = ret.subs(var==bound)
     return ret
 
+def scalar_potential_azimuthal(A, B):
+    """scalar_potential_azimuthal.
+    Returns the scalar electric potential assuming azimuthal symmetry and given iterables of coefficients a_l and b_l.
 
-
-
-
-
-"""_Q_lm_surface_charge(1, 0, spherical_surface_charge(scalar_potential_jackson),
-                     [(th, 0, pi), (ph, 0, 2*pi)], [r==R])
-_Q_lm_radiative(1, 0, spherical_surface_charge(scalar_potential_jackson))"""
-def _Q_lm_surface_charge(l, m, sigma, ranges, subs, vol_elem=r^2*sin(th)):
-    """_Q_lm_surface_charge.
-
-  :param l:
-  :param m:
-  :param sigma:
-  :param ranges:
-  :param subs:
-  :param vol_elem:
-    """
-    res = (vol_elem*sigma*r^l*conjugate_scalar(Y_lm_jackson(l, m)))(pt_sph()).subs(subs)
-    for rg in ranges:
-        res = integral(res, rg)
-        return res.subs(subs)
-
-def scalar_potential(A, B):
-    """scalar_potential.
-
-  :param A:
-  :param B:
+  :param A: Iterable containing the coefficients a_l of r^l
+  :param B: Iterable containing the coefficients b_l of r^(-(l + 1))
     """
     return EEE.scalar_field(sum(
         ((a*r^l + b/r^(l + 1))*legendre_P(l, cos(th)) for l, (a, b) in enumerate(zip(A, B)))
