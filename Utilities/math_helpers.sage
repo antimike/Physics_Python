@@ -128,6 +128,12 @@ def E_lm_E_long_wavelength(l, m, a, k=k, Z_0=Z_0):
 
 # Vector calculus and tools for working with Sage's scalar_field and vector_field
 
+def hermitian_conjugate(arg):
+    try:
+        return conjugate_scalar(arg)
+    except AttributeError:
+        return hermitian_conjugate_vector(arg)
+
 def conjugate_scalar(scalar):
     """conjugate_scalar.
     Wraps the complex conjugate of a scalar field as another scalar field on the same manifold.
