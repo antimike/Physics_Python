@@ -1,3 +1,4 @@
+from functools import wraps
 from abc import *
 # from functools import abstractmethod
 from collections import namedtuple
@@ -26,6 +27,7 @@ def pass_when(predicate, default_func=None, default_val=None):
     :param default_val: An alternative to default_func which provides a static (non-parameterizable) default value to return if 'predicate' is truthy.  If both arguments are provided, default_val takes precedence and no exception is thrown.
     """
     def decorate(fn):
+        @wraps(fn)
         def wrapped(*args, **kwargs):
             obj = args[0] if len(args) else None
             truthy = (callable(predicate) and predicate(obj)) or (not callable(predicate) and predicate)
