@@ -27,11 +27,12 @@ def _catch_NameError(fn):
 
 def initialize_EM_variables(subs=None):
     """initialize_EM_variables.
-    Initializes variables used in EM computations: c, k, Z_0, R, V, t, omega, epsilon_o, mu_0.
+    Initializes variables used in EM computations: q, Q, c, k, Z_0, R, V, t, omega, epsilon_o, mu_0.
   Initializes and returns 'substitute_exprs,' a dictionary of substitutions indexed by variable name.  If optional 'subs' argument is provided, new dictionary is appended to it.
 
   :param subs: (Optional) Dictionary of existing 'substitute_exprs.'
     """
+    q = var('q')
     c,k = var('c k')
     Z_0 = var('Z_0')
     R,V,t = var('R V t')
@@ -49,12 +50,16 @@ def initialize_EM_variables(subs=None):
 em_subs = initialize_EM_variables()
 
 EEE.<r,th,ph> = EuclideanSpace(coordinates='spherical')
+g = EEE.metric()
 sph = EEE.default_chart()
 cart.<x, y, z> = EEE.cartesian_coordinates()
 frame_sph = EEE.default_frame() # e_r, e_th, e_ph
 frame_sph.set_name('e_sph', latex_symbol=[r"\vu{r}", r"\vu*{\theta}", r"\vu*{\phi}"])
+r_hat, th_hat, ph_hat = frame_sph
 frame_cart = cart.frame()
 frame_cart.set_name('e_cart', latex_symbol=[r"\vu{x}", r"\vu{y}", r"\vu{z}"])
+x_hat, y_hat, z_hat = frame_cart
+
 r_vec = EEE.vector_field((r, 0, 0))
 
 def pt_sph(r=r, th=th, ph=ph):
