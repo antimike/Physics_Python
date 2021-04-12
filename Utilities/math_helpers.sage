@@ -43,8 +43,8 @@ def initialize_EM_variables(subs=None):
     }
     return subs
 
-Fields = namedtuple('Fields', ['E', 'H'])
-Multipole = namedtuple('Multipole', ['l', 'm', 'a_E', 'a_M', 'fields'])
+Fields = namedtuple('Fields', ['E', 'H'], defaults=[0, 0])
+Multipole = namedtuple('Multipole', ['l', 'm', 'a_E', 'a_M', 'fields', 'angular_power'], defaults=[0, 0, 0, 0, Fields(), 0])
 
 # Variable definitions
 
