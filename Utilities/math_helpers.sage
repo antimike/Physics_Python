@@ -46,6 +46,7 @@ def initialize_EM_variables(subs=None):
     return subs
 
 Fields = namedtuple('Fields', ['E', 'H'])
+Multipole = namedtuple('Multipole', ['l', 'm', 'a_E', 'a_M'])
 
 # Variable definitions
 
@@ -330,6 +331,19 @@ def diff_cross_section_pure(l, m, a):
     """
     return Z_0/(2*k^2)*norm(a + 0*i)*vector_complex_norm_squared(X_lm_jackson(l, m))
 
+@_catch_NameError
+def multipole_power_cross_section(multipoles, k=k, Z_0=Z_0):
+    """multipole_power_cross_section.
+    Computes the time-averaged power radiated per solid angle (cross-section) of a given collection of multipoles.
+    See Jackson 9.150.
+
+    :param multipoles: List or iterable of multipole namedtuples
+    :param k: (Optional) wavevector of radiation.  If not provided, the variable 'k' is used.
+    :param Z_0: (Optional) wave impedance.  If not provided, the variable 'Z_0' is used.
+    """
+    return Z_0/(2*k^2)*norm(sum(
+        ((-i)^(l+1)*(_m.a_E*X_lm_jackson(_m.l, _m.m).cross(r_vec) + _m.a_M*X_lm_jackson(_m.l, _m.m)) for _m in multipoles)
+    ) + 0*i)
 
 def scalar_potential_azimuthal(A, B):
     """scalar_potential_azimuthal.
