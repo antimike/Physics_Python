@@ -85,7 +85,7 @@ def L_operator(scalar):
 
   :param scalar: Scalar field to which operator should be applied.
     """
-    return -i*p.cross(scalar.gradient())
+    return -i*r_vec.cross(scalar.gradient())
 
 def X_lm_jackson(l, m):
     """X_lm_jackson.
