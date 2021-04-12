@@ -315,19 +315,21 @@ def multipole_fields_lm(l, m, A_E_outgoing, A_M_outgoing,
     """
     a_E_f_l = spherical_wavefront(l, A_E_outgoing, A_E_incoming)
     a_M_g_l = spherical_wavefront(l, A_M_outgoing, A_M_incoming)
-    E_lm = Z_0*(i/k*curl(a_E_f_l*X_lm_jackson) + a_M_g_l*X_lm_jackson)
-    H_lm = a_E_f_l*X_lm_jackson - i/k*curl(a_M_g_l*X_lm_jackson)
+    E_lm = Z_0*(i/k*curl(a_E_f_l*X_lm_jackson(l, m)) + a_M_g_l*X_lm_jackson(l, m))
+    H_lm = a_E_f_l*X_lm_jackson(l, m) - i/k*curl(a_M_g_l*X_lm_jackson(l, m))
     return Fields(E=E_lm, H=H_lm)
 
 @_catch_NameError
-def diff_cross_section_pure(l, m, a):
+def diff_cross_section_pure(l, m, a, k=k, Z_0=Z_0):
     """diff_cross_section_pure.
     Returns the differential cross-section of a "pure" multipole.
   See Jackson 9.151.
 
-  :param l: Order of the multipole (angular momentum)
-  :param m: Order of the multipole (magnetic)
-  :param a: Coefficient of the multipole
+    :param l: Order of the multipole (angular momentum)
+    :param m: Order of the multipole (magnetic)
+    :param a: Coefficient of the multipole
+    :param k: (Optional) wavevector of radiation.  If not provided, the variable 'k' is used.
+    :param Z_0: (Optional) wave impedance.  If not provided, the variable 'Z_0' is used.
     """
     return Z_0/(2*k^2)*norm(a + 0*i)*vector_complex_norm_squared(X_lm_jackson(l, m))
 
