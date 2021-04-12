@@ -206,8 +206,15 @@ def full_angular_integral(angular_fn):
 """cart_bounds = {x: [1, 2], y: [-2, 2], z: 4}
 test_scalar = EEE.scalar_field(x^2 + y^2 + z^2, chart=cart)
 surface_integral_scalar(test_scalar, cart_bounds)"""
-def surface_integral_scalar(scalar, bounds):
-    manifold = scalar._manifold
+def integral_coord_region(scalar, bounds):
+    """integral_coord_region.
+    Computes the integral of a scalar function over a region defined by either arbitrary bounds on coordinates of a certain chart, or by constraints of the form 'coord == const'.
+
+    :param scalar: Function to be integrated (scalar field)
+    :param bounds: Dictionary of bounds.  Entries should either be of the form `{x: [a, b]}`, where `x` is a coordinate variable and `a` and `b` are the corresponding (possibly functional) bounds, or `{x: A}`, where `A` is a constant.
+    """
+    # manifold = scalar._manifold
+    manifold = scalar.domain()
     c = _get_chart(bounds.keys(), manifold)
     vol_element = manifold.volume_form().comp(c['chart'].frame())[1, 2, 3]
     ret = (scalar*vol_element)(manifold.point(c['coords'], chart=c['chart']))
@@ -218,12 +225,8 @@ def surface_integral_scalar(scalar, bounds):
             ret = ret.subs(var==bound)
     return ret
 
-def volume_integral():
-    pass
 
 
-def flux_integral():
-    pass
 
 
 
