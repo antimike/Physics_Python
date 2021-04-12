@@ -1,7 +1,15 @@
 
 
 @debug(alias='db', test='{} is {}', level=1)
-def test_fn(a, b, db=None):
+def test_fn(a, b, **kwargs):
+    """test_fn.
+    Awesome test function of awesomeness
+
+    :param a: Any old thing
+    :param b: Any other old thing
+    :param db: Injected debugger
+    """
+    db = kwargs['db']
     db.indent(2).test('this', 'awesome').level(1)
     print(str(a) + ' ' + str(b))
 
