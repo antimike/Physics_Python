@@ -1,3 +1,4 @@
+from functools import wraps
 from collections import namedtuple
 from sage.manifolds.operators import *
 from sage.manifolds.catalog import Sphere
@@ -15,6 +16,7 @@ def _catch_NameError(fn):
 
   :param fn: Function to decorate
     """
+    @wraps(fn)
     def wrapper(*args, **kwargs):
         try:
             fn(*args, **kwargs)
