@@ -8,8 +8,6 @@ from sympy import factorial2
 sys.path.append('/home/user/Documents/Python/Utilities')
 import debugger as debg
 
-# Helper functions (internal)
-
 def _catch_NameError(fn):
     """_catch_NameError.
     Helper function/decorator to provide a helpful hint on any NameErrors thrown by functions that rely on specific variables (e.g., E, Z_0, B, c, k, etc.)
@@ -346,6 +344,20 @@ def multipole_power_cross_section(multipoles, k=k, Z_0=Z_0):
     return Z_0/(2*k^2)*norm(sum(
         ((-i)^(l+1)*(_m.a_E*X_lm_jackson(_m.l, _m.m).cross(r_vec) + _m.a_M*X_lm_jackson(_m.l, _m.m)) for _m in multipoles)
     ) + 0*i)
+
+@_catch_NameError
+def multipole_power_total(multipoles, k=k, Z_0=Z_0):
+    """multipole_power_total.
+    Computes the time-averaged total power radiated by a given collection of multipoles.
+    See Jackson 9.155.
+
+    :param multipoles: List or iterable of multipole namedtuples
+    :param k: (Optional) wavevector of radiation.  If not provided, the variable 'k' is used.
+    :param Z_0: (Optional) wave impedance.  If not provided, the variable 'Z_0' is used.
+    """
+    return Z_0/(2*k^2)*sum(
+        (norm(_m.a_E + 0*i) + norm(_m.a_M + 0*i) for _m in multipoles)
+    )
 
 def scalar_potential_azimuthal(A, B):
     """scalar_potential_azimuthal.
