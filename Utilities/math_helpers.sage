@@ -165,17 +165,31 @@ def X_lm_jackson(l, m):
     """
     return 1/sqrt(l*(l+1))*L_operator(Y_lm_jackson(l, m))
 
-def a_lm_E_long_wavelength(l, m, Q, Q_induced=0):
+@_catch_NameError
+def spherical_wavefront(l, outgoing, incoming, k=k):
+    """spherical_wavefront.
+    Returns a scalar field describing a spherical wavefront with specified outgoing and incoming coefficients.  Outgoing corresponds to h_l^1(kr), incoming to h_l^2(kr).
+    See Jackson 9.113.
+
+    :param l: Order of the multipole (angular momentum)
+    :param outgoing: Coefficient of h_l^1(kr)
+    :param incoming: Coefficient of h_l^2(kr)
+    :param k: (Optional) wavevector of radiation.  If not provided, the variable 'k' is used.
+    """
+    return outgoing*spherical_hankel1(l, k*r) + incoming*spherical_hankel2(l, k*r)
+
+@_catch_NameError
+def a_lm_E_long_wavelength(l, m, Q_static, Q_induced=0):
     """a_lm_E_long_wavelength.
     Compute the multipole coefficients a_lm^E as a function of l, m, and the static and induced moments Q and Q_induced.
   See Jackson 9.169.
 
   :param l: Order of the multipole (angular momentum)
   :param m: Order of the multipole (magnetic)
-  :param Q: Static multipole moment.  Should include the induced multipole moment due to magnetic induction.
+  :param Q_static: Static multipole moment.  Should include the induced multipole moment due to magnetic induction.
   :param Q_induced: Electric multipole moment due to magnetic induction (default = 0)
     """
-    return c*k^(l + 2)/(i*factorial2(2*l + 1))*sqrt((l + 1)/l)*(Q + Q_induced)
+    return c*k^(l + 2)/(i*factorial2(2*l + 1))*sqrt((l + 1)/l)*(Q_static + Q_induced)
 
 @_catch_NameError
 def a_lm_M_long_wavelength(l, m, M_current, M_intrinsic):
@@ -281,20 +295,6 @@ def H_lm_E_long_wavelength_expanded(l, m, a, E=None, k=k, Z_0=Z_0):
     if E is None:
         E = E_lm_E_long_wavelength(l, m, a, k=k, Z_0=Z_0)
     return -i/(k*Z_0)*curl(E)
-
-@_catch_NameError
-def spherical_wavefront(l, outgoing, incoming, k=k):
-    """spherical_wavefront.
-    Returns a scalar field describing a spherical wavefront with specified outgoing and incoming coefficients.  Outgoing corresponds to h_l^1(kr), incoming to h_l^2(kr).
-    See Jackson 9.113.
-
-    :param l: Order of the multipole (angular momentum)
-    :param outgoing: Coefficient of h_l^1(kr)
-    :param incoming: Coefficient of h_l^2(kr)
-    :param k: (Optional) wavevector of radiation.  If not provided, the variable 'k' is used.
-    """
-    return outgoing*spherical_hankel1(l, k*r) + incoming*spherical_hankel2(l, k*r)
-
 
 @_catch_NameError
 def multipole_fields_lm(l, m, A_E_outgoing, A_M_outgoing,
