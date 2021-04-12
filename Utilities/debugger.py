@@ -1,5 +1,5 @@
 from abc import *
-from functools import abstractmethod
+# from functools import abstractmethod
 from collections import namedtuple
 from contextlib import contextmanager
 
@@ -30,7 +30,6 @@ def pass_when(predicate, default_func=None, default_val=None):
             obj = args[0] if len(args) else None
             truthy = (callable(predicate) and predicate(obj)) or (not callable(predicate) and predicate)
             if truthy:
-                print('YOU SHALL NOT PASS')
                 if default_val:
                     return default_val
                 elif callable(default_func):
@@ -103,6 +102,8 @@ class Debugger:
     def _update_state(self, **kwargs):
         self._state |= kwargs
     def __init__(self, fn, **props):
+        if fn is None:
+            fn = lambda *args, **kwargs: None
         self._alias = props.get('alias')
         self.active = False
         self._wrapped = fn
@@ -174,25 +175,3 @@ class Debugger:
             return ret
         else:
             pass
-
-@debug(alias='db', test='{} is {}', level=1)
-def test_fn(a, b, db=None):
-    db.indent(2).test('this', 'awesome').level(1)
-    print(str(a) + ' ' + str(b))
-
-test_fn.active
-test_fn('this', 'awesome', debug=True)
-test_fn._wrapped('hello', 'world')
-
-test_fn('hello', 'world', debug=True)
-test_fn.active
-Debugger._pass_predicate(test_fn)
-dbg = Debugger(test_fn, test='{} is {}', level=1)
-dbg.test('boopy', 'shadoopy').level()()
-dbg.print_state('indent')()
-dbg.level()()
-dbg.indent(lambda s: lambda state: state['level'])
-dbg.tab(10*'-')
-dbg.indent()()
-dbg.test('First', 'second', indent=1, tab='-----')()
-dbg.test
