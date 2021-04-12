@@ -70,6 +70,72 @@ def pt_sph(r=r, th=th, ph=ph):
 def pt_cart(x=x, y=y, z=z):
     return EEE((x, y, z), chart=cart)
 
+def hermitian_conjugate(arg):
+    try:
+        return conjugate_scalar(arg)
+    except AttributeError:
+        return hermitian_conjugate_vector(arg)
+
+def conjugate_scalar(scalar):
+    """conjugate_scalar.
+    Wraps the complex conjugate of a scalar field as another scalar field on the same manifold.
+
+  :param scalar: Scalar field
+    """
+    manifold = scalar._manifold
+    ret = manifold.scalar_field()
+    for chart in manifold.atlas():
+        try:
+            ret.add_expr(conjugate(scalar.coord_function(chart=chart).expr() + 0*i), chart=chart)
+        except:
+            pass
+    return ret
+
+def hermitian_conjugate_vector(vector):
+    """hermitian_conjugate_vector.
+    Wraps the Hermitian conjugate of a vector field as a differential 1-form on the same manifold.
+
+  :param vector: Vector field to conjugate
+    """
+    manifold = vector._domain
+    ret = manifold.diff_form(1)
+    for chart in manifold.atlas():
+        for j in range(1, manifold.dim() + 1):
+            ret.add_comp(chart.frame())[j] = conjugate(vector.comp(chart.frame())[j].expr() + 0*i)
+    return ret
+
+def vector_complex_norm_squared(v):
+    """vector_complex_norm_squared.
+    Returns the norm-squared of a vector field with complex components, as a scalar field on the same manifold.
+
+  :param v: Vector field to find norm of
+    """
+    return hermitian_conjugate_vector(v)['_i']*v['i']
+
+"""cart_bounds = {x: [1, 2], y: [-2, 2], z: 4}
+test_scalar = EEE.scalar_field(x^2 + y^2 + z^2, chart=cart)
+surface_integral_scalar(test_scalar, cart_bounds)"""
+def integral_coord_region(scalar, bounds):
+    """integral_coord_region.
+    Computes the integral of a scalar function over a region defined by either arbitrary bounds on coordinates of a certain chart, or by constraints of the form 'coord == const'.
+
+    :param scalar: Function to be integrated (scalar field)
+    :param bounds: Dictionary of bounds.  Entries should either be of the form `{x: [a, b]}`, where `x` is a coordinate variable and `a` and `b` are the corresponding (possibly functional) bounds, or `{x: A}`, where `A` is a constant.
+    """
+    # manifold = scalar._manifold
+    manifold = scalar.domain()
+    c = _get_chart(bounds.keys(), manifold)
+    vol_element = manifold.volume_form().comp(c['chart'].frame())[1, 2, 3]
+    ret = (scalar*vol_element)(manifold.point(c['coords'], chart=c['chart']))
+    for var, bound in bounds.items():
+        if isinstance(bound, list) or isinstance(bound, tuple):
+            ret = integral(ret, var, *bound)
+        else:
+            ret = ret.subs(var==bound)
+    return ret
+
+# EM functions (mostly from Jackson)
+
 def Y_lm_jackson(l, m):
     """Y_lm_jackson.
     Spherical harmonic, with phase and normalization convention as in Jackson.
@@ -164,69 +230,6 @@ def multipole_fields_lm(l, m, A_E_outgoing, A_M_outgoing,
     H_lm = a_E_f_l*X_lm_jackson - i/k*curl(a_M_g_l*X_lm_jackson)
     return Fields(E=E_lm, H=H_lm)
 
-
-# Vector calculus and tools for working with Sage's scalar_field and vector_field
-
-def hermitian_conjugate(arg):
-    try:
-        return conjugate_scalar(arg)
-    except AttributeError:
-        return hermitian_conjugate_vector(arg)
-
-def conjugate_scalar(scalar):
-    """conjugate_scalar.
-    Wraps the complex conjugate of a scalar field as another scalar field on the same manifold.
-
-  :param scalar: Scalar field
-    """
-    manifold = scalar._manifold
-    ret = manifold.scalar_field()
-    for chart in manifold.atlas():
-        try:
-            ret.add_expr(conjugate(scalar.coord_function(chart=chart).expr() + 0*i), chart=chart)
-        except:
-            pass
-    return ret
-
-def hermitian_conjugate_vector(vector):
-    """hermitian_conjugate_vector.
-    Wraps the Hermitian conjugate of a vector field as a differential 1-form on the same manifold.
-
-  :param vector: Vector field to conjugate
-    """
-    manifold = vector._domain
-    ret = manifold.diff_form(1)
-    for chart in manifold.atlas():
-        for j in range(1, manifold.dim() + 1):
-            ret.add_comp(chart.frame())[j] = conjugate(vector.comp(chart.frame())[j].expr() + 0*i)
-    return ret
-
-def vector_complex_norm_squared(v):
-    """vector_complex_norm_squared.
-    Returns the norm-squared of a vector field with complex components, as a scalar field on the same manifold.
-
-  :param v: Vector field to find norm of
-    """
-    return hermitian_conjugate_vector(v)['_i']*v['i']
-
-@_catch_NameError
-def H_lm_E_long_wavelength(l, m, a, E=None, k=k, Z_0=Z_0):
-    """_H_lm_E_long_wavelength.
-    Returns the magnetic multipole field due to electric multipole of given order with given coefficient.
-  If optional argument E is provided, computes the result by taking the curl of E.
-  See Jackson 9.109.
-
-  :param l: Order of the multipole (angular momentum)
-  :param m: Order of the multipole (magnetic)
-  :param a: Coefficient of the (electric) multipole
-  :param E: (Optional) Electric field of the multipole
-  :param k: (Optional) wavevector of radiation.  If not provided, the variable 'k' is used.
-  :param Z_0: (Optional) wave impedance.  If not provided, the variable 'Z_0' is used.
-    """
-    if E is None:
-        E = E_lm_E_long_wavelength(l, m, a, k=k, Z_0=Z_0)
-    return -i/(k*Z_0)*curl(E)
-
 @_catch_NameError
 def diff_cross_section_pure(l, m, a):
     """diff_cross_section_pure.
@@ -239,30 +242,6 @@ def diff_cross_section_pure(l, m, a):
     """
     return Z_0/(2*k^2)*norm(a + 0*i)*vector_complex_norm_squared(X_lm_jackson(l, m))
 
-def full_angular_integral(angular_fn):
-    return integral(sin(th)*angular_fn(pt_sph()), th, 0, pi).integral(ph, 0, 2*pi)
-
-"""cart_bounds = {x: [1, 2], y: [-2, 2], z: 4}
-test_scalar = EEE.scalar_field(x^2 + y^2 + z^2, chart=cart)
-surface_integral_scalar(test_scalar, cart_bounds)"""
-def integral_coord_region(scalar, bounds):
-    """integral_coord_region.
-    Computes the integral of a scalar function over a region defined by either arbitrary bounds on coordinates of a certain chart, or by constraints of the form 'coord == const'.
-
-    :param scalar: Function to be integrated (scalar field)
-    :param bounds: Dictionary of bounds.  Entries should either be of the form `{x: [a, b]}`, where `x` is a coordinate variable and `a` and `b` are the corresponding (possibly functional) bounds, or `{x: A}`, where `A` is a constant.
-    """
-    # manifold = scalar._manifold
-    manifold = scalar.domain()
-    c = _get_chart(bounds.keys(), manifold)
-    vol_element = manifold.volume_form().comp(c['chart'].frame())[1, 2, 3]
-    ret = (scalar*vol_element)(manifold.point(c['coords'], chart=c['chart']))
-    for var, bound in bounds.items():
-        if isinstance(bound, list) or isinstance(bound, tuple):
-            ret = integral(ret, var, *bound)
-        else:
-            ret = ret.subs(var==bound)
-    return ret
 
 def scalar_potential_azimuthal(A, B):
     """scalar_potential_azimuthal.
