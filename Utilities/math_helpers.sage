@@ -45,6 +45,8 @@ def initialize_EM_variables(subs=None):
     }
     return subs
 
+Fields = namedtuple('Fields', ['E', 'H'])
+
 # Variable definitions
 
 em_subs = initialize_EM_variables()
@@ -125,6 +127,43 @@ def E_lm_E_long_wavelength(l, m, a, k=k, Z_0=Z_0):
            - l/(2*l + 1)*k*r*spherical_hankel1(l-1, k*r) + i*spherical_hankel1(l, k*r)) \
           *grad(Y_lm_jackson(l, m)) \
           - i*l*(l+1)/r*spherical_hankel1(l, k*r)*Y_lm_jackson(l, m)*frame_sph[1])
+
+@_catch_NameError
+def spherical_wavefront(l, outgoing, incoming, k=k):
+    """spherical_wavefront.
+    Returns a scalar field describing a spherical wavefront with specified outgoing and incoming coefficients.  Outgoing corresponds to h_l^1(kr), incoming to h_l^2(kr).
+    See Jackson 9.113.
+
+    :param l: Order of the multipole (angular momentum)
+    :param outgoing: Coefficient of h_l^1(kr)
+    :param incoming: Coefficient of h_l^2(kr)
+    :param k: (Optional) wavevector of radiation.  If not provided, the variable 'k' is used.
+    """
+    return outgoing*spherical_hankel1(l, k*r) + incoming*spherical_hankel2(l, k*r)
+
+
+@_catch_NameError
+def multipole_fields_lm(l, m, A_E_outgoing, A_M_outgoing,
+                        A_E_incoming=0, A_M_incoming=0, k=k, Z_0=Z_0):
+    """multipole_fields_lm.
+    Returns a 'Field' namedtuple with the fields of a pure (l, m) multipole with specified outgoing and incoming moments.
+    See Jackson 9.122.
+
+    :param l: Order of the multipole (angular momentum)
+    :param m: Order of the multipole (magnetic)
+    :param A_E_outgoing: Outgoing electric moment
+    :param A_M_outgoing: Outgoing magnetic moment
+    :param A_E_incoming: Incoming electric moment (default = 0)
+    :param A_M_incoming: Incoming magnetic moment (default = 0)
+    :param k: (Optional) wavevector of radiation.  If not provided, the variable 'k' is used.
+    :param Z_0: (Optional) wave impedance.  If not provided, the variable 'Z_0' is used.
+    """
+    a_E_f_l = spherical_wavefront(l, A_E_outgoing, A_E_incoming)
+    a_M_g_l = spherical_wavefront(l, A_M_outgoing, A_M_incoming)
+    E_lm = Z_0*(i/k*curl(a_E_f_l*X_lm_jackson) + a_M_g_l*X_lm_jackson)
+    H_lm = a_E_f_l*X_lm_jackson - i/k*curl(a_M_g_l*X_lm_jackson)
+    return Fields(E=E_lm, H=H_lm)
+
 
 # Vector calculus and tools for working with Sage's scalar_field and vector_field
 
