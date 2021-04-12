@@ -318,8 +318,8 @@ def multipole_fields_lm(l, m, A_E_outgoing, A_M_outgoing,
     return Fields(E=E_lm, H=H_lm)
 
 @_catch_NameError
-def diff_cross_section_pure(l, m, a, k=k, Z_0=Z_0):
-    """diff_cross_section_pure.
+def multipole_power_cross_section_pure(l, m, a, k=k, Z_0=Z_0):
+    """multipole_power_cross_section_pure.
     Returns the differential cross-section of a "pure" multipole.
   See Jackson 9.151.
 
