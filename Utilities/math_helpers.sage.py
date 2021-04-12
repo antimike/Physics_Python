@@ -14,8 +14,6 @@ from sympy import factorial2
 sys.path.append('/home/user/Documents/Python/Utilities')
 import debugger as debg
 
-# Helper functions (internal)
-
 def _catch_NameError(fn):
     """_catch_NameError.
     Helper function/decorator to provide a helpful hint on any NameErrors thrown by functions that rely on specific variables (e.g., E, Z_0, B, c, k, etc.)
@@ -25,7 +23,7 @@ def _catch_NameError(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
         try:
-            fn(*args, **kwargs)
+            return fn(*args, **kwargs)
         except NameError as e:
             import sys
             raise NameError(str(e) + ' Perhaps try calling math_helpers.initialize_EM_variables()?').with_traceback(sys.exec_info()[_sage_const_2 ])
@@ -51,6 +49,9 @@ def initialize_EM_variables(subs=None):
     }
     return subs
 
+Fields = namedtuple('Fields', ['E', 'H'], defaults=[_sage_const_0 , _sage_const_0 ])
+Multipole = namedtuple('Multipole', ['l', 'm', 'a_E', 'a_M', 'fields', 'angular_power'], defaults=[_sage_const_0 , _sage_const_0 , _sage_const_0 , _sage_const_0 , Fields(), _sage_const_0 ])
+
 # Variable definitions
 
 em_subs = initialize_EM_variables()
@@ -73,66 +74,6 @@ def pt_sph(r=r, th=th, ph=ph):
 
 def pt_cart(x=x, y=y, z=z):
     return EEE((x, y, z), chart=cart)
-
-def Y_lm_jackson(l, m):
-    """Y_lm_jackson.
-    Spherical harmonic, with phase and normalization convention as in Jackson.
-  See Jackson 3.53.
-
-  :param l: Order (angular momentum)
-  :param m: Order (magnetic)
-    """
-    return EEE.scalar_field(spherical_harmonic(l, m, th, ph)*(-_sage_const_1 )**m)
-
-def L_operator(scalar):
-    """L_operator.
-    Vector angular momentum operator.
-  See Jackson 9.101.
-
-  :param scalar: Scalar field to which operator should be applied.
-    """
-    return -i*p.cross(scalar.gradient())
-
-def X_lm_jackson(l, m):
-    """X_lm_jackson.
-    Vector spherical harmonic, defined by X_lm = [l(l+1)]^(-1/2)*LY_lm.
-  See Jackson 9.119.
-
-  :param l: Order of the multipole (angular momentum)
-  :param m: Order of the multipole (magnetic)
-    """
-    return _sage_const_1 /sqrt(l*(l+_sage_const_1 ))*L_operator(Y_lm_jackson(l, m))
-
-def a_lm_E_long_wavelength(l, m, Q):
-    """a_lm_E_long_wavelength.
-    Compute the multipole coefficients a_lm^E as a function of l, m, and the static moments Q.
-  See Jackson 9.169.
-
-  :param l: Order of the multipole (angular momentum)
-  :param m: Order of the multipole (magnetic)
-  :param Q: Static multipole moment.  Should include the induced multipole moment due to magnetic induction.
-    """
-    return c*k**(l + _sage_const_2 )/(i*factorial2(_sage_const_2 *l + _sage_const_1 ))*sqrt((l + _sage_const_1 )/l)*Q
-
-@_catch_NameError
-def E_lm_E_long_wavelength(l, m, a, k=k, Z_0=Z_0):
-    """E_lm_E_long_wavelength.
-    Electric field of an electric multipole with coefficient a.
-  See Jackson 9.122.
-
-  :param l: Order of the multipole (angular momentum)
-  :param m: Order of the multipole (magnetic)
-  :param a: Multipole coefficient
-  :param k: (Optional) wavevector of radiation.  If not provided, the variable 'k' is used.
-  :param Z_0: (Optional) wave impedance.  If not provided, the variable 'Z_0' is used.
-    """
-    return i*Z_0*a/k \
-        *(((l + _sage_const_1 )/(_sage_const_2 *l + _sage_const_1 )*k*r*spherical_hankel1(l+_sage_const_1 , k*r) \
-           - l/(_sage_const_2 *l + _sage_const_1 )*k*r*spherical_hankel1(l-_sage_const_1 , k*r) + i*spherical_hankel1(l, k*r)) \
-          *grad(Y_lm_jackson(l, m)) \
-          - i*l*(l+_sage_const_1 )/r*spherical_hankel1(l, k*r)*Y_lm_jackson(l, m)*frame_sph[_sage_const_1 ])
-
-# Vector calculus and tools for working with Sage's scalar_field and vector_field
 
 def hermitian_conjugate(arg):
     try:
@@ -176,39 +117,6 @@ def vector_complex_norm_squared(v):
     """
     return hermitian_conjugate_vector(v)['_i']*v['i']
 
-@_catch_NameError
-def H_lm_E_long_wavelength(l, m, a, E=None, k=k, Z_0=Z_0):
-    """_H_lm_E_long_wavelength.
-    Returns the magnetic multipole field due to electric multipole of given order with given coefficient.
-  If optional argument E is provided, computes the result by taking the curl of E.
-  See Jackson 9.109.
-
-  :param l: Order of the multipole (angular momentum)
-  :param m: Order of the multipole (magnetic)
-  :param a: Coefficient of the (electric) multipole
-  :param E: (Optional) Electric field of the multipole
-  :param k: (Optional) wavevector of radiation.  If not provided, the variable 'k' is used.
-  :param Z_0: (Optional) wave impedance.  If not provided, the variable 'Z_0' is used.
-    """
-    if E is None:
-        E = E_lm_E_long_wavelength(l, m, a, k=k, Z_0=Z_0)
-    return -i/(k*Z_0)*curl(E)
-
-@_catch_NameError
-def diff_cross_section_pure(l, m, a):
-    """diff_cross_section_pure.
-    Returns the differential cross-section of a "pure" multipole.
-  See Jackson 9.151.
-
-  :param l: Order of the multipole (angular momentum)
-  :param m: Order of the multipole (magnetic)
-  :param a: Coefficient of the multipole
-    """
-    return Z_0/(_sage_const_2 *k**_sage_const_2 )*norm(a + _sage_const_0 *i)*vector_complex_norm_squared(X_lm_jackson(l, m))
-
-def full_angular_integral(angular_fn):
-    return integral(sin(th)*angular_fn(pt_sph()), th, _sage_const_0 , pi).integral(ph, _sage_const_0 , _sage_const_2 *pi)
-
 """cart_bounds = {x: [1, 2], y: [-2, 2], z: 4}
 test_scalar = EEE.scalar_field(x^2 + y^2 + z^2, chart=cart)
 surface_integral_scalar(test_scalar, cart_bounds)"""
@@ -230,6 +138,232 @@ def integral_coord_region(scalar, bounds):
         else:
             ret = ret.subs(var==bound)
     return ret
+
+# EM functions (mostly from Jackson)
+
+def Y_lm_jackson(l, m):
+    """Y_lm_jackson.
+    Spherical harmonic, with phase and normalization convention as in Jackson.
+  See Jackson 3.53.
+
+  :param l: Order (angular momentum)
+  :param m: Order (magnetic)
+    """
+    return EEE.scalar_field(spherical_harmonic(l, m, th, ph)*(-_sage_const_1 )**m)
+
+def L_operator(scalar):
+    """L_operator.
+    Vector angular momentum operator.
+  See Jackson 9.101.
+
+  :param scalar: Scalar field to which operator should be applied.
+    """
+    return -i*r_vec.cross(scalar.gradient())
+
+def X_lm_jackson(l, m):
+    """X_lm_jackson.
+    Vector spherical harmonic, defined by X_lm = [l(l+1)]^(-1/2)*LY_lm.
+  See Jackson 9.119.
+
+  :param l: Order of the multipole (angular momentum)
+  :param m: Order of the multipole (magnetic)
+    """
+    return _sage_const_1 /sqrt(l*(l+_sage_const_1 ))*L_operator(Y_lm_jackson(l, m))
+
+@_catch_NameError
+def spherical_wavefront(l, outgoing, incoming, k=k):
+    """spherical_wavefront.
+    Returns a scalar field describing a spherical wavefront with specified outgoing and incoming coefficients.  Outgoing corresponds to h_l^1(kr), incoming to h_l^2(kr).
+    See Jackson 9.113.
+
+    :param l: Order of the multipole (angular momentum)
+    :param outgoing: Coefficient of h_l^1(kr)
+    :param incoming: Coefficient of h_l^2(kr)
+    :param k: (Optional) wavevector of radiation.  If not provided, the variable 'k' is used.
+    """
+    return outgoing*spherical_hankel1(l, k*r) + incoming*spherical_hankel2(l, k*r)
+
+@_catch_NameError
+def a_lm_E_long_wavelength(l, m, Q_static, Q_induced=_sage_const_0 ):
+    """a_lm_E_long_wavelength.
+    Compute the multipole coefficients a_lm^E as a function of l, m, and the static and induced moments Q and Q_induced.
+  See Jackson 9.169.
+
+  :param l: Order of the multipole (angular momentum)
+  :param m: Order of the multipole (magnetic)
+  :param Q_static: Static multipole moment.  Should include the induced multipole moment due to magnetic induction.
+  :param Q_induced: Electric multipole moment due to magnetic induction (default = 0)
+    """
+    return c*k**(l + _sage_const_2 )/(i*factorial2(_sage_const_2 *l + _sage_const_1 ))*sqrt((l + _sage_const_1 )/l)*(Q_static + Q_induced)
+
+@_catch_NameError
+def a_lm_M_long_wavelength(l, m, M_current, M_intrinsic):
+    """a_lm_M_long_wavelength.
+    Compute the multipole coefficients a_lm^E as a function of l, m, and the magnetic moments corresponding to currents (M_current) and intrinsic magnetization (M_intrinsic).
+  See Jackson 9.171.
+
+    :param l: Order of the multipole (angular momentum)
+    :param m: Order of the multipole (magnetic)
+    :param M_current: Magnetic multipole moment due to current
+    :param M_intrinsic: Magnetic multipole moment due to intrinsic magnetization
+    """
+    return i*k**(l+_sage_const_2 )/factorial2(_sage_const_2 *l+_sage_const_1 )*sqrt((l+_sage_const_1 )/l)*(M_current + M_intrinsic)
+
+@_catch_NameError
+def Q_lm(l, m, charge_density, bounds):
+    """Q_lm.
+    Electric multipole moment due to a static charge distribution in the long-wavelength limit.
+    See Jackson 9.170.
+
+    :param l: Order (angular momentum)
+    :param m: Order (magnetic)
+    :param charge_density: Scalar function describing the charge distribution.  Can be confined to a surface or line if appropriate bounds are used.
+    :param bounds: Bounds describing the extent of the charge distribution.  Can restrict the dimension in the same way that `integral_coord_region` allows.
+    """
+    return integral_coord_region(
+        r**l*hermitian_conjugate(Y_lm_jackson(l, m))*charge_density, bounds)
+
+@_catch_NameError
+def Q_lm_induced(l, m, magnetization, bounds):
+    """Q_lm_induced.
+    Electric multipole moment induced by intrinsic magnetization in the long-wavelength limit.
+    See Jackson 9.170.
+
+    :param l: Order (angular momentum)
+    :param m: Order (magnetic)
+    :param magnetization: Intrinsic magnetization (vector field)
+    :param bounds: Bounds describing the extent of the magnetization.  Can restrict the dimension in the same way that `integral_coord_region` allows.
+    """
+    return -i*k/(c*(l+_sage_const_1 ))*integral_coord_region(
+        r**l*hermitian_conjugate(Y_lm_jackson(l, m))*div(r_vec.cross(magnetization)), bounds)
+
+@_catch_NameError
+def M_lm_current(l, m, currrent, bounds):
+    """M_lm_current.
+    Magnetic multipole moment caused by a currrent source in the long-wavelength limit.
+    See Jackson 9.172.
+
+    :param l: Order (angular momentum)
+    :param m: Order (magnetic)
+    :param currrent: Current density (vector field)
+    :param bounds: Bounds describing the extent of the current source.  Can restrict the dimension in the same way that `integral_coord_region` allows.
+    """
+    return -_sage_const_1 /(l+_sage_const_1 )*integral_coord_region(
+        r**l*hermitian_conjugate(Y_lm_jackson(l, m))*div(r_vec.cross(current)), bounds)
+
+@_catch_NameError
+def M_lm_intrinsic(l, m, magnetization, bounds):
+    """M_lm_intrinsic.
+    Magnetic multipole moment caused by intrinsic magnetization in the long-wavelength limit.
+    See Jackson 9.172.
+
+    :param l: Order (angular momentum)
+    :param m: Order (magnetic)
+    :param magnetization: Magnetization density (vector field)
+    :param bounds: Bounds describing the extent of the magnetization.  Can restrict the dimension in the same way that `integral_coord_region` allows.
+    """
+    return -integral_coord_region(
+        r**l*hermitian_conjugate(Y_lm_jackson(l, m))*div(magnetization), bounds)
+
+@_catch_NameError
+def E_lm_E_long_wavelength_expanded(l, m, a, k=k, Z_0=Z_0):
+    """E_lm_E_long_wavelength.
+    Electric field of an outgoing electric multipole with coefficient a.
+    Expanded from the form given in Jackson 9.122.
+
+  :param l: Order of the multipole (angular momentum)
+  :param m: Order of the multipole (magnetic)
+  :param a: Multipole coefficient
+  :param k: (Optional) wavevector of radiation.  If not provided, the variable 'k' is used.
+  :param Z_0: (Optional) wave impedance.  If not provided, the variable 'Z_0' is used.
+    """
+    return i*Z_0*a/k \
+        *(((l + _sage_const_1 )/(_sage_const_2 *l + _sage_const_1 )*k*r*spherical_hankel1(l+_sage_const_1 , k*r) \
+           - l/(_sage_const_2 *l + _sage_const_1 )*k*r*spherical_hankel1(l-_sage_const_1 , k*r) + i*spherical_hankel1(l, k*r)) \
+          *grad(Y_lm_jackson(l, m)) \
+          - i*l*(l+_sage_const_1 )/r*spherical_hankel1(l, k*r)*Y_lm_jackson(l, m)*frame_sph[_sage_const_1 ])
+
+@_catch_NameError
+def H_lm_E_long_wavelength_expanded(l, m, a, E=None, k=k, Z_0=Z_0):
+    """_H_lm_E_long_wavelength.
+    Returns the magnetic multipole field due to an outgoing electric multipole of given order with given coefficient.
+  If optional argument E is provided, computes the result by taking the curl of E.
+    Expanded from the form given in Jackson 9.122.
+
+  :param l: Order of the multipole (angular momentum)
+  :param m: Order of the multipole (magnetic)
+  :param a: Coefficient of the (electric) multipole
+  :param E: (Optional) Electric field of the multipole
+  :param k: (Optional) wavevector of radiation.  If not provided, the variable 'k' is used.
+  :param Z_0: (Optional) wave impedance.  If not provided, the variable 'Z_0' is used.
+    """
+    if E is None:
+        E = E_lm_E_long_wavelength(l, m, a, k=k, Z_0=Z_0)
+    return -i/(k*Z_0)*curl(E)
+
+@_catch_NameError
+def multipole_fields_lm(l, m, A_E_outgoing, A_M_outgoing,
+                        A_E_incoming=_sage_const_0 , A_M_incoming=_sage_const_0 , k=k, Z_0=Z_0):
+    """multipole_fields_lm.
+    Returns a 'Field' namedtuple with the fields of a pure (l, m) multipole with specified outgoing and incoming moments.
+    See Jackson 9.122.
+
+    :param l: Order of the multipole (angular momentum)
+    :param m: Order of the multipole (magnetic)
+    :param A_E_outgoing: Outgoing electric moment
+    :param A_M_outgoing: Outgoing magnetic moment
+    :param A_E_incoming: Incoming electric moment (default = 0)
+    :param A_M_incoming: Incoming magnetic moment (default = 0)
+    :param k: (Optional) wavevector of radiation.  If not provided, the variable 'k' is used.
+    :param Z_0: (Optional) wave impedance.  If not provided, the variable 'Z_0' is used.
+    """
+    a_E_f_l = spherical_wavefront(l, A_E_outgoing, A_E_incoming)
+    a_M_g_l = spherical_wavefront(l, A_M_outgoing, A_M_incoming)
+    E_lm = Z_0*(i/k*curl(a_E_f_l*X_lm_jackson(l, m)) + a_M_g_l*X_lm_jackson(l, m))
+    H_lm = a_E_f_l*X_lm_jackson(l, m) - i/k*curl(a_M_g_l*X_lm_jackson(l, m))
+    return Fields(E=E_lm, H=H_lm)
+
+@_catch_NameError
+def multipole_power_cross_section_pure(l, m, a, k=k, Z_0=Z_0):
+    """multipole_power_cross_section_pure.
+    Returns the differential cross-section of a "pure" multipole.
+  See Jackson 9.151.
+
+    :param l: Order of the multipole (angular momentum)
+    :param m: Order of the multipole (magnetic)
+    :param a: Coefficient of the multipole
+    :param k: (Optional) wavevector of radiation.  If not provided, the variable 'k' is used.
+    :param Z_0: (Optional) wave impedance.  If not provided, the variable 'Z_0' is used.
+    """
+    return Z_0/(_sage_const_2 *k**_sage_const_2 )*norm(a + _sage_const_0 *i)*vector_complex_norm_squared(X_lm_jackson(l, m))
+
+@_catch_NameError
+def multipole_power_cross_section(multipoles, k=k, Z_0=Z_0):
+    """multipole_power_cross_section.
+    Computes the time-averaged power radiated per solid angle (cross-section) of a given collection of multipoles.
+    See Jackson 9.150.
+
+    :param multipoles: List or iterable of multipole namedtuples
+    :param k: (Optional) wavevector of radiation.  If not provided, the variable 'k' is used.
+    :param Z_0: (Optional) wave impedance.  If not provided, the variable 'Z_0' is used.
+    """
+    return Z_0/(_sage_const_2 *k**_sage_const_2 )*norm(sum(
+        ((-i)**(l+_sage_const_1 )*(_m.a_E*X_lm_jackson(_m.l, _m.m).cross(r_vec) + _m.a_M*X_lm_jackson(_m.l, _m.m)) for _m in multipoles)
+    ) + _sage_const_0 *i)
+
+@_catch_NameError
+def multipole_power_total(multipoles, k=k, Z_0=Z_0):
+    """multipole_power_total.
+    Computes the time-averaged total power radiated by a given collection of multipoles.
+    See Jackson 9.155.
+
+    :param multipoles: List or iterable of multipole namedtuples
+    :param k: (Optional) wavevector of radiation.  If not provided, the variable 'k' is used.
+    :param Z_0: (Optional) wave impedance.  If not provided, the variable 'Z_0' is used.
+    """
+    return Z_0/(_sage_const_2 *k**_sage_const_2 )*sum(
+        (norm(_m.a_E + _sage_const_0 *i) + norm(_m.a_M + _sage_const_0 *i) for _m in multipoles)
+    )
 
 def scalar_potential_azimuthal(A, B):
     """scalar_potential_azimuthal.
