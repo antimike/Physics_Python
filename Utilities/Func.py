@@ -34,43 +34,6 @@ class Func:
     Methods
     -------
     """
-    @staticmethod
-    def Print(wrapped_fn=None, start=25*'-', end=25*'-', info=None):
-        info = info or wrapped_fn.__name__
-        def wrapper(*args):
-            print(start)
-            if info is not None:
-                print(info)
-            for arg in args:
-                print(arg)
-            print(end)
-            return args
-        ret = Func(wrapper)
-        return ret if not callable(wrapped_fn) else ret.compose_left(Func.unspread(wrapped_fn))
-    @staticmethod
-    def Const(const):
-        return Func(lambda arg: const)
-    @staticmethod
-    def Id():
-        return Func(lambda arg: arg)
-    @staticmethod
-    def wrap_take_first(fn):
-        return Func(Func.take_first(Func.take_first(fn)))
-    @staticmethod
-    def take_first(fn):
-        @wraps(fn)
-        def wrapped(it):
-            return fn(list(it)[0]) if any(it) else fn()
-        return wrapped
-    @staticmethod
-    def wrap_unspread(fn):
-        return Func(Func.unspread(Func.unspread(fn)))
-    @staticmethod
-    def unspread(fn):
-        @wraps(fn)
-        def wrapped(arg):
-            return fn(*arg)
-        return wrapped
     def print(self, start=25*'-', end=25*'-'):
         self.compose_left(Func.Print(start, end)).compose_right(Func.Print(start, end))
         return self
@@ -111,27 +74,6 @@ class Func:
         """
         self._fns.append(mp)
         return self
-    # def parallel_with(self, *others):
-        # return Func(lambda *args: [self(*args), *[other(*args) for other in others]])
-    # def spread(self):
-        # self.compose_right(Func.Id())
-        # return self
-    # def gather(self):
-        # return Func.unspread(self)
-    # def iterate_over(self, generator):
-        # if not callable(generator):
-            # generator = Func.Const(generator)
-        # @wraps(self)
-        # def wrapped(args):
-            # ret = []
-            # items = generator(args)
-            # while True:
-                # try:
-                    # ret.append(self(next(items)))
-                # except StopIteration:
-                    # break
-            # return ret
-        # return Func(wrapped)
     def map_into(self, mappable):
         pass
     def map_onto(self, mappable):
@@ -140,6 +82,23 @@ class Func:
         for f in self._fns:
             args = f(args)
         return args
+
+def Const(const):
+    return Func(lambda arg: const)
+def Id():
+    return Func(lambda arg: arg)
+def Print(wrapped_fn=None, start=25*'-', end=25*'-', info=None):
+    info = info or wrapped_fn.__name__
+    def wrapper(*args):
+        print(start)
+        if info is not None:
+            print(info)
+        for arg in args:
+            print(arg)
+        print(end)
+        return args
+    ret = Func(wrapper)
+    return ret if not callable(wrapped_fn) else ret.compose_left(Func.unspread(wrapped_fn))
 
 from collections import namedtuple
 Papis_Opts = namedtuple('Opts', ['tags', 'attrs'])
