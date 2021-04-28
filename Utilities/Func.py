@@ -1,5 +1,27 @@
 from functools import wraps
 
+"""
+New ideas:
+    - "Generator functions"
+    - For the command-line parsing problem:
+        - Simply consume the arguments one-by-one in a generator, yielding a PapisDoc object when a URL is encountered
+        - This is (probably) a monad of some sort, but is (probably) not worth abstracting as such
+    - Many different situations fit into this general model: (generator) --> Func --> (generator)
+        - Map (i.e., something to apply to "mappable")
+        - Promise / Observable
+        - Operator
+        - Transformation
+        - Aggregator
+        - Class hierarchy?
+    - The "map over" class function from the original `Func` class is just composition and currying with a 2-ary generator function (i.e., generator "stacking" / "nesting")
+    - Is "generator" itself a monad?
+        - Perhaps "finite generator"
+        - Its "bind" / "return" could be composed with other functions programmatically to create other IO type containers (such as CLI parsers)
+        - Could this be used (abused?) to create semi-arbitrary monads?
+    - Operator overloading
+    - One way of looking at the "spread / unspread" problem:
+        - This is just about containerization---do we want a function to act on a container (monad) instance, or directly on the container's elements (i.e., "inside" the monad)?
+"""
 class Func:
     """
     A class to represent composable functions of a single variable.
@@ -53,38 +75,67 @@ class Func:
         self.compose_left(Func.Print(start, end)).compose_right(Func.Print(start, end))
         return self
     def __init__(self, fn):
+        """__init__.
+        Func constructor.
+
+        Assumes a unital function (i.e. "one in, one out")
+        Assigns the wrapped function's name to the instance
+
+        :param fn: Function to wrap
+        """
         self._fns = [fn]
         self.__name__ = fn.__name__
     def map_args(self, mp, eval=True):
+        """map_args.
+        Composes a Func with a 'map' invocation to the right (i.e., acting on the single argument, which is assumed to be iterable)
+        TODO: Require `mp` to be a Func instance?
+
+        :param mp: The Func to map over the invoking instance's arg(s)
+        :param eval: A Boolean indicating whether the `list` constructor should be applied before passing to the invoking Func
+        """
         ret = self.compose_right(lambda args: map(mp, args))
         return ret.compose_left(list) if eval else ret
     def compose_right(self, mp):
+        """compose_right.
+        Composes with another Func from the left (i.e, f.compose_right(g)(arg) = f(g(arg)))
+
+        :param mp: Func instance to compose with
+        """
         self._fns.insert(0, mp)
         return self
     def compose_left(self, mp):
+        """compose_left.
+        Composes a Func with another Func from the right (i.e., f.compose_left(g)(arg) = g(f(arg)))
+
+        :param mp: Function to compose with
+        """
         self._fns.append(mp)
         return self
-    def parallel_with(self, *others):
-        return Func(lambda *args: [self(*args), *[other(*args) for other in others]])
-    def spread(self):
-        self.compose_right(Func.Id())
-        return self
-    def gather(self):
-        return Func.unspread(self)
-    def iterate_over(self, generator):
-        if not callable(generator):
-            generator = Func.Const(generator)
-        @wraps(self)
-        def wrapped(args):
-            ret = []
-            items = generator(args)
-            while True:
-                try:
-                    ret.append(self(next(items)))
-                except StopIteration:
-                    break
-            return ret
-        return Func(wrapped)
+    # def parallel_with(self, *others):
+        # return Func(lambda *args: [self(*args), *[other(*args) for other in others]])
+    # def spread(self):
+        # self.compose_right(Func.Id())
+        # return self
+    # def gather(self):
+        # return Func.unspread(self)
+    # def iterate_over(self, generator):
+        # if not callable(generator):
+            # generator = Func.Const(generator)
+        # @wraps(self)
+        # def wrapped(args):
+            # ret = []
+            # items = generator(args)
+            # while True:
+                # try:
+                    # ret.append(self(next(items)))
+                # except StopIteration:
+                    # break
+            # return ret
+        # return Func(wrapped)
+    def map_into(self, mappable):
+        pass
+    def map_onto(self, mappable):
+        pass
     def __call__(self, *args):
         for f in self._fns:
             args = f(args)
