@@ -4,7 +4,7 @@
 from sage.all_cmdline import *   # import sage library
 
 _sage_const_2 = Integer(2); _sage_const_1 = Integer(1); _sage_const_0 = Integer(0); _sage_const_3 = Integer(3); _sage_const_25 = Integer(25)
-from functools import wraps
+from functools import rraps
 from collections import namedtuple
 from sage.manifolds.operators import *
 from sage.manifolds.catalog import Sphere
