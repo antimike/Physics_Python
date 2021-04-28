@@ -21,6 +21,7 @@ New ideas:
     - Operator overloading
     - One way of looking at the "spread / unspread" problem:
         - This is just about containerization---do we want a function to act on a container (monad) instance, or directly on the container's elements (i.e., "inside" the monad)?
+    - `typing` module---provides ready-made abstractions for generics (in particular `Collections`)
 """
 class Func:
     """
@@ -35,13 +36,19 @@ class Func:
     -------
     """
     def print(self, start=25*'-', end=25*'-'):
-        self.compose_left(Func.Print(start, end)).compose_right(Func.Print(start, end))
+        """print.
+        Adds `print` calls to the beginning and end of a Func evaluation chain.
+
+        :param start: Text signifier of the start of a `print` block for this function
+        :param end: Text signifier of the end of a `print` block for this function
+        """
+        self.compose_left(Print(start, end)).compose_right(Print(start, end))
         return self
     def __init__(self, fn):
         """__init__.
         Func constructor.
 
-        Assumes a unital function (i.e. "one in, one out")
+        Assumes a 1-ary function (i.e. "one in, one out")
         Assigns the wrapped function's name to the instance
 
         :param fn: Function to wrap
@@ -50,12 +57,12 @@ class Func:
         self.__name__ = fn.__name__
     def map_args(self, mp, eval=True):
         """map_args.
-        Composes a Func with a 'map' invocation to the right (i.e., acting on the single argument, which is assumed to be iterable)
-        TODO: Require `mp` to be a Func instance?
+        Composes a `Func` with a `map` invocation to the right (i.e., acting on the single argument, which is assumed to be iterable)
 
         :param mp: The Func to map over the invoking instance's arg(s)
         :param eval: A Boolean indicating whether the `list` constructor should be applied before passing to the invoking Func
         """
+        #TODO: Require `mp` to be a Func instance?
         ret = self.compose_right(lambda args: map(mp, args))
         return ret.compose_left(list) if eval else ret
     def compose_right(self, mp):
