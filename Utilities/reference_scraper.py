@@ -1,3 +1,4 @@
+#!/bin/env python3
 import requests, bs4, re, sys, doi
 
 def valid_url(url):
