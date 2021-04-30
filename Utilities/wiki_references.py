@@ -54,7 +54,6 @@ def _serialize(data, outfile):
             f.write(formatted)
         return ''
 
-
 def log_and_return(fn):
     """log_and_return.
     Decorator and miniature IOC container.
@@ -142,6 +141,13 @@ def get_refs_from_soup(soup):
     return soup.find_all('cite', recursive=True)
 
 def get_wiki_references(url, outfile=None):
+    """get_wiki_references.
+    Extracts references from predefined sections of wiki page
+    Uses `urlscan`, `refextract`, `doi`, `wikipedia`, and `re` (for ArXiv URLs)
+
+    :param url: URL of wiki article to scrape
+    :param outfile: File to write extracted references to
+    """
     def _check(l):
         return (not l['doi'] or l['doi'] == l['refs'][-1]['doi']) \
             and (not l['arxiv'] or l['arxiv'] == l['refs'][-1]['arxiv'])
@@ -266,7 +272,6 @@ class TemplateParser:
     @staticmethod
     def args(t):
         return list(map(TemplateParser.parse_arg, t.arguments))
-
 
 if __name__ == "__main__":
     import doctest
