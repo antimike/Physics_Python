@@ -15,12 +15,17 @@ import urlscan
 import deepdiff as dd
 import timeit
 import re
+import urllib
 
 # Define some test vars
 url = 'https://en.wikipedia.org/wiki/Julian_Schwinger'
 search_term = 'Julian Schwinger'
 results = {}
 
+# Get search term
+def get_wiki_page_id(url):
+    path = urllib.parse(url).path
+    return path.split(r'/')[-1]
 
 # Get raw wiki page using wikipedia module
 page_request = wiki.requests.get(url)
