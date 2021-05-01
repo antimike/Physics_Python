@@ -184,7 +184,7 @@ def get_pywiki_page(url):
     APISite("en", "wikipedia")
     >>> page = pywiki.Page(pywiki_site, 'Bivector')
     >>> page
-    Page('Bievector')
+    Page('Bivector')
     >>> page.exists()
     True
     """
@@ -205,21 +205,9 @@ def get_citation_templates(page):
     >>> import pywikibot as pywiki
     >>> pywiki_site = pywiki.Site('en', 'wikipedia')
     >>> page = pywiki.Page(pywiki_site, 'Bivector')
-    >>> citations = get_citation_templates(parsed_page)
+    >>> citations = get_citation_templates(page)
     >>> citations['Template:Cite journal']
-    [{'citeseerx': '10.1.1.125.368',
-      'doi': '10.1007/bf00046919',
-      'first1': 'David',
-      'first2': 'Renatus',
-      'journal': 'Acta Applicandae Mathematicae',
-      'last1': 'Hestenes',
-      'last2': 'Ziegler',
-      'pages': '25–63',
-      's2cid': '1702787',
-      'title': 'Projective Geometry with Clifford Algebra',
-      'url': 'http://geocalc.clas.asu.edu/pdf/PGwithCA.pdf',
-      'volume': '23',
-      'year': '1991'}]
+    [{'citeseerx': '10.1.1.125.368', 'doi': '10.1007/bf00046919', 'first1': 'David', 'first2': 'Renatus', 'journal': 'Acta Applicandae Mathematicae', 'last1': 'Hestenes', 'last2': 'Ziegler', 'pages': '25–63', 's2cid': '1702787', 'title': 'Projective Geometry with Clifford Algebra', 'url': 'http://geocalc.clas.asu.edu/pdf/PGwithCA.pdf', 'volume': '23', 'year': '1991'}]
     """
     parsed_templates = list(map(lambda t: (t[0].title(), t[1]), page.templatesWithParams()))
 
