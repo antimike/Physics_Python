@@ -8,6 +8,7 @@ from sympy import factorial2
 sys.path.append('/home/user/Documents/Python/Utilities')
 import debugger as debg
 
+""" Helpers and decorators """
 def _catch_NameError(fn):
     """_catch_NameError.
     Helper function/decorator to provide a helpful hint on any NameErrors thrown by functions that rely on specific variables (e.g., E, Z_0, B, c, k, etc.)
@@ -22,6 +23,50 @@ def _catch_NameError(fn):
             import sys
             raise NameError(str(e) + ' Perhaps try calling math_helpers.initialize_EM_variables()?').with_traceback(sys.exec_info()[2])
     return wrapper
+
+@debg.debug(alias='dbg',
+            recursion_state='State: ordered = {}, unordered = {}, _unordered = {}',
+            testing='Testing: ordered = {}, unordered = {}',
+            vline='-'*25,
+            testing_post='Testing {} from ordering {}', found='Found: {}', not_found='Not found!',
+            passing='Received ordered = {}, unordered = {}; recursing further')
+def _get_chart(coords, manifold, **kwargs):
+    """_get_chart.
+
+    :param coords: String containing the coordinates of the chart to be found, e.g., 'y x z' (order doesn't matter)
+    :param manifold: Manifold on which the chart is defined
+    :param kwargs: Keywords consumed and defined by @debug.debug decorator
+
+    >>> _get_chart([y, z, x], EEE, dbg=False)
+    >>> {'chart': Chart (E^3, (x, y, z)), 'coords': [x, y, z]}
+    """
+    dbg = kwargs.get('dbg')
+    def _get_chart_recursive(ordered, unordered):
+        dbg.indent(len(ordered) + 1)
+        _unordered, ret = set(unordered), None
+        while ret is None and any(unordered):
+            first_arg = ordered + [coord := unordered.pop()]
+            second_arg = _unordered.difference({coord})
+            dbg.vline().indent().recursion_state(ordered, unordered, _unordered).testing(first_arg, second_arg).vline()
+            ret = _test(first_arg, second_arg)
+            dbg.vline().indent().found(ret).vline()
+        return ret
+    def _test(ordered, unordered):
+        if len(unordered) == 0:
+            try:
+                string = ' '.join(map(str, ordered)).strip()
+                dbg.testing_post(string, ordered)
+                return (manifold.get_chart(string), ordered)
+            except KeyError:
+                dbg.not_found()
+                return None
+        else:
+            dbg.passing(ordered, unordered)
+            return _get_chart_recursive(ordered, unordered)
+    return {
+      'chart': found[0],
+      'coords': found[1]
+    } if (found := _get_chart_recursive([], set(coords))) and found[0] else None
 
 def initialize_EM_variables(subs=None):
     """initialize_EM_variables.
@@ -43,10 +88,9 @@ def initialize_EM_variables(subs=None):
     }
     return subs
 
+""" Variable definitions """
 Fields = namedtuple('Fields', ['E', 'H'], defaults=[0, 0])
 Multipole = namedtuple('Multipole', ['l', 'm', 'a_E', 'a_M', 'fields', 'angular_power'], defaults=[0, 0, 0, 0, Fields(), 0])
-
-# Variable definitions
 
 em_subs = initialize_EM_variables()
 
@@ -69,6 +113,7 @@ def pt_sph(r=r, th=th, ph=ph):
 def pt_cart(x=x, y=y, z=z):
     return EEE((x, y, z), chart=cart)
 
+""" Pure math functions """
 def hermitian_conjugate(arg):
     try:
         return conjugate_scalar(arg)
@@ -111,17 +156,18 @@ def vector_complex_norm_squared(v):
     """
     return hermitian_conjugate_vector(v)['_i']*v['i']
 
-"""cart_bounds = {x: [1, 2], y: [-2, 2], z: 4}
-test_scalar = EEE.scalar_field(x^2 + y^2 + z^2, chart=cart)
-surface_integral_scalar(test_scalar, cart_bounds)"""
 def integral_coord_region(scalar, bounds):
     """integral_coord_region.
     Computes the integral of a scalar function over a region defined by either arbitrary bounds on coordinates of a certain chart, or by constraints of the form 'coord == const'.
 
     :param scalar: Function to be integrated (scalar field)
     :param bounds: Dictionary of bounds.  Entries should either be of the form `{x: [a, b]}`, where `x` is a coordinate variable and `a` and `b` are the corresponding (possibly functional) bounds, or `{x: A}`, where `A` is a constant.
+
+    >>> cart_bounds = {x: [1, 2], y: [-2, 2], z: 4}
+    >>> test_scalar = EEE.scalar_field(x^2 + y^2 + z^2, chart=cart)
+    >>> integral_coord_region(test_scalar, cart_bounds)
+    236/3
     """
-    # manifold = scalar._manifold
     manifold = scalar.domain()
     c = _get_chart(bounds.keys(), manifold)
     vol_element = manifold.volume_form().comp(c['chart'].frame())[1, 2, 3]
@@ -133,8 +179,8 @@ def integral_coord_region(scalar, bounds):
             ret = ret.subs(var==bound)
     return ret
 
-# EM functions (mostly from Jackson)
-
+""" EM functions (mostly from Jackson) """
+""" Spherical harmonics """
 def Y_lm_jackson(l, m):
     """Y_lm_jackson.
     Spherical harmonic, with phase and normalization convention as in Jackson.
@@ -177,6 +223,7 @@ def spherical_wavefront(l, outgoing, incoming, k=k):
     """
     return outgoing*spherical_hankel1(l, k*r) + incoming*spherical_hankel2(l, k*r)
 
+""" Multipole moments """
 @_catch_NameError
 def a_lm_E_long_wavelength(l, m, Q_static, Q_induced=0):
     """a_lm_E_long_wavelength.
@@ -259,6 +306,7 @@ def M_lm_intrinsic(l, m, magnetization, bounds):
     return -integral_coord_region(
         r^l*hermitian_conjugate(Y_lm_jackson(l, m))*div(magnetization), bounds)
 
+""" Fields """
 @_catch_NameError
 def E_lm_E_long_wavelength_expanded(l, m, a, k=k, Z_0=Z_0):
     """E_lm_E_long_wavelength.
@@ -317,6 +365,7 @@ def multipole_fields_lm(l, m, A_E_outgoing, A_M_outgoing,
     H_lm = a_E_f_l*X_lm_jackson(l, m) - i/k*curl(a_M_g_l*X_lm_jackson(l, m))
     return Fields(E=E_lm, H=H_lm)
 
+""" Power """
 @_catch_NameError
 def multipole_power_cross_section_pure(l, m, a, k=k, Z_0=Z_0):
     """multipole_power_cross_section_pure.
@@ -359,6 +408,7 @@ def multipole_power_total(multipoles, k=k, Z_0=Z_0):
         (norm(_m.a_E + 0*i) + norm(_m.a_M + 0*i) for _m in multipoles)
     )
 
+""" Scalar potential """
 def scalar_potential_azimuthal(A, B):
     """scalar_potential_azimuthal.
     Returns the scalar electric potential assuming azimuthal symmetry and given iterables of coefficients a_l and b_l.
@@ -369,40 +419,3 @@ def scalar_potential_azimuthal(A, B):
     return EEE.scalar_field(sum(
         ((a*r^l + b/r^(l + 1))*legendre_P(l, cos(th)) for l, (a, b) in enumerate(zip(A, B)))
     ))
-
-
-"""_get_chart([y, z, x], EEE, debug=True)"""
-@debg.debug(alias='dbg',
-            recursion_state='State: ordered = {}, unordered = {}, _unordered = {}',
-            testing='Testing: ordered = {}, unordered = {}',
-            vline='-'*25,
-            testing_post='Testing {} from ordering {}', found='Found: {}', not_found='Not found!',
-            passing='Received ordered = {}, unordered = {}; recursing further')
-def _get_chart(coords, manifold, **kwargs):
-    dbg = kwargs.get('dbg')
-    def _get_chart_recursive(ordered, unordered):
-        dbg.indent(len(ordered) + 1)
-        _unordered, ret = set(unordered), None
-        while ret is None and any(unordered):
-            first_arg = ordered + [coord := unordered.pop()]
-            second_arg = _unordered.difference({coord})
-            dbg.vline().indent().recursion_state(ordered, unordered, _unordered).testing(first_arg, second_arg).vline()
-            ret = _test(first_arg, second_arg)
-            dbg.vline().indent().found(ret).vline()
-        return ret
-    def _test(ordered, unordered):
-        if len(unordered) == 0:
-            try:
-                string = ' '.join(map(str, ordered)).strip()
-                dbg.testing_post(string, ordered)
-                return (manifold.get_chart(string), ordered)
-            except KeyError:
-                dbg.not_found()
-                return None
-        else:
-            dbg.passing(ordered, unordered)
-            return _get_chart_recursive(ordered, unordered)
-    return {
-      'chart': found[0],
-      'coords': found[1]
-    } if (found := _get_chart_recursive([], set(coords))) and found[0] else None
