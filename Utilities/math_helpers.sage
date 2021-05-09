@@ -252,6 +252,72 @@ def a_lm_M_long_wavelength(l, m, M_current, M_intrinsic):
     return i*k^(l+2)/factorial2(2*l+1)*sqrt((l+1)/l)*(M_current + M_intrinsic)
 
 @_catch_NameError
+def E_wavefront_lm(l, m, E):
+    """E_wavefront_lm.
+    Returns the function a_E(l, m)*f_l(k*r), in the notation of Jackson's eq. 9.123.
+
+    :param l: Order of the multipole (angular momentum)
+    :param m: Order of the multipole (magnetic)
+    :param E: Electric field
+
+    >>> # This is necessary because Sage has trouble telling when expressions involving Hankel fns are equal
+    >>> # Obviously this works best for functions of r alone
+    >>> # The next testing fn can be used more generally but depends on `integral_coord_region`
+    >>> def test_equality_radial(qty1, qty2, r_min=0, r_max=10):
+    ...:    exprs = [complex_norm_squared(qty1 - qty2)(pt_sph()), 1 - complex_norm_squared(qty1/qty2)(pt_sph())]
+    ...:    ret = None
+    ...:    while not ret and len(exprs) > 0:
+    ...:        try:
+    ...:            ret = integral(exprs.pop(), r, r_min, r_max).subs(k==1).is_trivial_zero()
+    ...:        except:
+    ...:            continue
+    ...:    if ret is None:
+    ...:        raise ValueError("Evaluation of the comparison integrals failed for the quantities %s and %s" \
+    ...:            %(qty1, qty2))
+    ...:    return ret
+    >>> def test_equality_general(qty1, qty2, bounds={r: [0, 10], th: th, ph: ph}):
+    ...:    exprs = [complex_norm_squared(qty1 - qty2), 1 - complex_norm_squared(qty1/qty2)]
+    ...:    ret = False
+    ...:    while not ret and len(exprs) > 0:
+    ...:        try:
+    ...:            ret = integral_coord_region(exprs.pop(), bounds).subs(k==1).is_trivial_zero()
+    ...:        except:
+    ...:            continue
+    ...:    if ret is None:
+    ...:        raise ValueError("Evaluation of the comparison integrals failed for the quantities %s and %s" \
+    ...:            %(qty1, qty2))
+    ...:    return ret
+    >>> _l, _m = (1, 0)
+    >>> _out, _in = (1, 0)
+    >>> f_l = spherical_wavefront(_l, _out, _in)
+    >>> H = f_l*L_operator(Y_lm_jackson(_l, _m))      # From Jackson 9.118 (pure-electric multipole)
+    >>> E = i*Z_0/k*curl(H)
+    >>> wavefront = E_wavefront_lm(_l, _m, E)
+    >>> test_equality_radial(f_l, wavefront, r_min=1, r_max=10)
+    >>> test_equality_general(f_l, wavefront, bounds={r: [2, 10], th: th, ph: ph})
+    >>> wavefront.display(chart=sph)
+    E^3 --> R
+    (r, th, ph) |--> -1/3*(3*Z_0*k*r + 3*I*Z_0)*e^(I*k*r)/(Z_0*k^2*r^2)
+    >>> f_l_confirm = -k/Z_0/(_l*(_l+1))/Y_lm_jackson(_l, _m)*r_vec.dot(E)      # See Jackson 9.117 (defn. of f_l in terms of r.E)
+    >>> f_l_confirm.display(chart=sph)
+    E^3 --> R
+    (r, th, ph) |--> -(k*r + I)*e^(I*k*r)/(k^2*r^2)
+    >>> (f_l_confirm - f_l)(pt_sph()).simplify()
+    0
+    """
+    # Note the division by r^2, since we're integrating against d\Omega
+    # See implementation of `integral_coord_region`
+    # TODO: Fix this in a better way
+    # Also note the factor of l(l+1), as opposed to Jackson's sqrt(l(l+1))...possible typo in Jackson
+    # TODO: Check this
+    return -k/Z_0/r^2/(l*(l+1))*EEE.scalar_field(
+        integral_coord_region(
+            hermitian_conjugate(Y_lm_jackson(l, m))*r_vec.dot(E),
+            {r: r, th: [0, pi], ph: [0, 2*pi]}
+        )
+    )
+
+@_catch_NameError
 def Q_lm(l, m, charge_density, bounds):
     """Q_lm.
     Electric multipole moment due to a static charge distribution in the long-wavelength limit.
