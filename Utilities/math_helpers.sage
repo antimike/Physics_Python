@@ -12,21 +12,6 @@ sys.path.append('/home/user/Documents/Python/Utilities')
 import debugger as debg
 
 """ Helpers and decorators """
-def _catch_NameError(fn):
-    """_catch_NameError.
-    Helper function/decorator to provide a helpful hint on any NameErrors thrown by functions that rely on specific variables (e.g., E, Z_0, B, c, k, etc.)
-
-  :param fn: Function to decorate
-    """
-    @sage_wraps(fn)
-    def wrapper(*args, **kwargs):
-        try:
-            return fn(*args, **kwargs)
-        except NameError as e:
-            import sys
-            raise NameError(str(e) + ' Perhaps try calling math_helpers.initialize_EM_variables()?').with_traceback(sys.exec_info()[2])
-    return wrapper
-
 @debg.debug(alias='dbg',
             recursion_state='State: ordered = {}, unordered = {}, _unordered = {}',
             testing='Testing: ordered = {}, unordered = {}',
@@ -509,10 +494,10 @@ def L_operator(scalar):
 def X_lm_jackson(l, m):
     """X_lm_jackson.
     Vector spherical harmonic, defined by X_lm = [l(l+1)]^(-1/2)*LY_lm.
-  See Jackson 9.119.
+    See Jackson 9.119.
 
-  :param l: Order of the multipole (angular momentum)
-  :param m: Order of the multipole (magnetic)
+    :param l: Order of the multipole (angular momentum)
+    :param m: Order of the multipole (magnetic)
     """
     return 1/sqrt(l*(l+1))*L_operator(Y_lm_jackson(l, m))
 
@@ -537,7 +522,6 @@ def spherical_wavefront(l, outgoing, incoming, k=k):
     return EEE.scalar_field(outgoing*spherical_hankel1(l, k*r) + incoming*spherical_hankel2(l, k*r))
 
 """ Multipole moments """
-@_catch_NameError
 def a_lm_E_long_wavelength(l, m, Q_static, Q_induced=0):
     """a_lm_E_long_wavelength.
     Compute the multipole coefficients a_lm^E as a function of l, m, and the static and induced moments Q and Q_induced.
@@ -554,7 +538,6 @@ def a_lm_E_long_wavelength(l, m, Q_static, Q_induced=0):
     """
     return c*k^(l + 2)/(i*factorial2(2*l + 1))*sqrt((l + 1)/l)*(Q_static + Q_induced)
 
-@_catch_NameError
 def a_lm_M_long_wavelength(l, m, M_current, M_intrinsic):
     """a_lm_M_long_wavelength.
     Compute the multipole coefficients a_lm^E as a function of l, m, and the magnetic moments corresponding to currents (M_current) and intrinsic magnetization (M_intrinsic).
@@ -568,7 +551,6 @@ def a_lm_M_long_wavelength(l, m, M_current, M_intrinsic):
     """
     return i*k^(l+2)/factorial2(2*l+1)*sqrt((l+1)/l)*(M_current + M_intrinsic)
 
-@_catch_NameError
 def E_wavefront_lm(l, m, E):
     """E_wavefront_lm.
     Returns the function a_E(l, m)*f_l(k*r), in the notation of Jackson's eq. 9.123.
@@ -603,7 +585,6 @@ def E_wavefront_lm(l, m, E):
         )
     )
 
-@_catch_NameError
 def Q_lm(l, m, charge_density, bounds):
     """Q_lm.
     Electric multipole moment due to a static charge distribution in the long-wavelength limit.
@@ -618,7 +599,6 @@ def Q_lm(l, m, charge_density, bounds):
         r^l*apply_to(conjugate, Y_lm_jackson(l, m))*charge_density, bounds
     )
 
-@_catch_NameError
 def Q_lm_induced(l, m, magnetization, bounds):
     """Q_lm_induced.
     Electric multipole moment induced by intrinsic magnetization in the long-wavelength limit.
@@ -632,7 +612,6 @@ def Q_lm_induced(l, m, magnetization, bounds):
     return -i*k/(c*(l+1))*integral_coord_region(
         r^l*apply_to(conjugate, Y_lm_jackson(l, m))*div(r_vec.cross(magnetization)), bounds)
 
-@_catch_NameError
 def M_lm_current(l, m, currrent, bounds):
     """M_lm_current.
     Magnetic multipole moment caused by a currrent source in the long-wavelength limit.
@@ -646,7 +625,6 @@ def M_lm_current(l, m, currrent, bounds):
     return -1/(l+1)*integral_coord_region(
         r^l*apply_to(conjugate, Y_lm_jackson(l, m))*div(r_vec.cross(current)), bounds)
 
-@_catch_NameError
 def M_lm_intrinsic(l, m, magnetization, bounds):
     """M_lm_intrinsic.
     Magnetic multipole moment caused by intrinsic magnetization in the long-wavelength limit.
@@ -690,7 +668,6 @@ def E_dipole_fields(moment):
     H = H_from_A_free_space(A)
     return Fields(E=E_from_A_free_space(A, H), H=H)
 
-@_catch_NameError
 def E_lm_E_long_wavelength_expanded(l, m, a, k=k, Z_0=Z_0):
     """E_lm_E_long_wavelength.
     Electric field of an outgoing electric multipole with coefficient a.
@@ -708,7 +685,6 @@ def E_lm_E_long_wavelength_expanded(l, m, a, k=k, Z_0=Z_0):
           *grad(Y_lm_jackson(l, m)) \
           - i*l*(l+1)/r*spherical_hankel1(l, k*r)*Y_lm_jackson(l, m)*frame_sph[1])
 
-@_catch_NameError
 def H_lm_E_long_wavelength_expanded(l, m, a, E=None, k=k, Z_0=Z_0):
     """_H_lm_E_long_wavelength.
     Returns the magnetic multipole field due to an outgoing electric multipole of given order with given coefficient.
@@ -726,7 +702,6 @@ def H_lm_E_long_wavelength_expanded(l, m, a, E=None, k=k, Z_0=Z_0):
         E = E_lm_E_long_wavelength(l, m, a, k=k, Z_0=Z_0)
     return -i/(k*Z_0)*curl(E)
 
-@_catch_NameError
 def multipole_fields_lm(l, m, A_E_outgoing, A_M_outgoing,
                         A_E_incoming=0, A_M_incoming=0, k=k, Z_0=Z_0):
     """multipole_fields_lm.
@@ -792,7 +767,6 @@ def multipole_fields_lm(l, m, A_E_outgoing, A_M_outgoing,
     return Fields(E=E_lm, H=H_lm)
 
 """ Power """
-@_catch_NameError
 def multipole_power_cross_section_pure(l, m, a, k=k, Z_0=Z_0):
     """multipole_power_cross_section_pure.
     Returns the differential cross-section of a "pure" multipole.
@@ -806,7 +780,6 @@ def multipole_power_cross_section_pure(l, m, a, k=k, Z_0=Z_0):
     """
     return Z_0/(2*k^2)*norm(a + 0*i)*complex_norm(X_lm_jackson(l, m))
 
-@_catch_NameError
 def multipole_power_cross_section(multipoles, k=k, Z_0=Z_0):
     """multipole_power_cross_section.
     Computes the time-averaged power radiated per solid angle (cross-section) of a given collection of multipoles.
@@ -820,7 +793,6 @@ def multipole_power_cross_section(multipoles, k=k, Z_0=Z_0):
         ((-i)^(l+1)*(_m.a_E*X_lm_jackson(_m.l, _m.m).cross(r_vec) + _m.a_M*X_lm_jackson(_m.l, _m.m)) for _m in multipoles)
     ) + 0*i)
 
-@_catch_NameError
 def multipole_power_total(multipoles, k=k, Z_0=Z_0):
     """multipole_power_total.
     Computes the time-averaged total power radiated by a given collection of multipoles.
