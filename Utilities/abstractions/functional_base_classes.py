@@ -261,3 +261,4 @@ def reduce_col_title_opts(table, opts):
     data_kwargs = reduce_data_opts(table, opts)
     col_title_opts = {**table._opts['col_title_opts'], **opts, **opts['col_title_opts']}
     return {**reduce_data_opts(table, opts), 'col_title_opts': col_title_opts}
+
