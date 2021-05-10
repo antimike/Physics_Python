@@ -1,6 +1,6 @@
 # __init__.property
 
-import .transformations as transformations
-import .presentation as presentation
-import .analysis as analysis
-import .structs as structs
+from . import transformations
+from . import presentation
+from . import analysis
+from . import structs
