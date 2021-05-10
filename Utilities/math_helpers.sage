@@ -702,7 +702,7 @@ def E_lm_E_long_wavelength_expanded(l, m, a, k=k, Z_0=Z_0):
   :param k: (Optional) wavevector of radiation.  If not provided, the variable 'k' is used.
   :param Z_0: (Optional) wave impedance.  If not provided, the variable 'Z_0' is used.
     """
-    return i*Z_0*a/k \
+    return -i*Z_0*a/k \
         *(((l + 1)/(2*l + 1)*k*r*spherical_hankel1(l+1, k*r) \
            - l/(2*l + 1)*k*r*spherical_hankel1(l-1, k*r) + i*spherical_hankel1(l, k*r)) \
           *grad(Y_lm_jackson(l, m)) \
