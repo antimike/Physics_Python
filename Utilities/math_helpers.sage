@@ -319,6 +319,34 @@ def pt_cart(x=x, y=y, z=z):
     return EEE((x, y, z), chart=cart)
 
 """ Pure math functions """
+def trig_to_exp(expr):
+    """trig_to_exp.
+    Convenience wrapper around Maxima's `exponentialize` function
+
+    :param expr: Expression to exponentialize
+    """
+    return sageobj(expr._maxima_().exponentialize())
+
+def exp_to_trig(expr):
+    """exp_to_trig.
+    Convenience wrapper around Maxima's `demoivre` function
+
+    :param expr: Expression to de-exponentialize
+    """
+    return sageobj(expr._maxima_().demoivre())
+
+# TODO: Test `trig_reduce`
+def simplify_trig(fn):
+    """simplify_trig.
+    Convenience wrapper around `exp_to_trig`
+
+    :param fn: Function or expression to simplify
+    """
+    try:
+        return exp_to_trig(fn(pt_sph())).trig_reduce()
+    except:
+        return exp_to_trig(fn)
+
 @deprecated(details="Use 'apply_to' with callable 'conjugate' instead")
 def hermitian_conjugate(arg):
     """hermitian_conjugate.
