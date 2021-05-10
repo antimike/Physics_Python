@@ -4,6 +4,7 @@ from sage.manifolds.operators import *
 from sage.manifolds.catalog import Sphere
 from scipy import special as fns
 from sympy import factorial2
+from pint import UnitRegistry
 from deprecation import deprecated
 import logging
 
@@ -17,7 +18,7 @@ def _catch_NameError(fn):
 
   :param fn: Function to decorate
     """
-    @wraps(fn)
+    @sage_wraps(fn)
     def wrapper(*args, **kwargs):
         try:
             return fn(*args, **kwargs)
@@ -274,15 +275,15 @@ def modify_with(obj, fn, new_name=None, new_latex_name=None, func_name=None, fun
 def initialize_EM_variables(subs=None):
     """initialize_EM_variables.
     Initializes variables used in EM computations: q, Q, c, k, Z_0, R, V, t, omega, epsilon_o, mu_0.
-  Initializes and returns 'substitute_exprs,' a dictionary of substitutions indexed by variable name.  If optional 'subs' argument is provided, new dictionary is appended to it.
+    Initializes and returns 'substitute_exprs,' a dictionary of substitutions indexed by variable name.
+    If optional 'subs' argument is provided, new dictionary is appended to it.
 
-  :param subs: (Optional) Dictionary of existing 'substitute_exprs.'
+    :param subs: (Optional) Dictionary of existing 'substitute_exprs.'
     """
-    q = var('q')
-    c,k = var('c k')
-    Z_0 = var('Z_0')
-    R,V,t = var('R V t')
-    omega, epsilon_0, mu_0 = var('omega epsilon_0 mu_0')
+    # Complex variables
+    k, omega = var('k omega')
+    # Real variables
+    c, q, Z_0, R, t, epsilon_0, mu_0 = var('c q Z_0 R t epsilon_0 mu_0', domain='real')
     subs = subs if subs is not None else {}
     subs |= {
         omega: k*c,
@@ -291,11 +292,12 @@ def initialize_EM_variables(subs=None):
     }
     return subs
 
-""" Variable definitions """
 Fields = namedtuple('Fields', ['E', 'H'], defaults=[0, 0])
 Multipole = namedtuple('Multipole', ['l', 'm', 'a_E', 'a_M', 'fields', 'angular_power'], defaults=[0, 0, 0, 0, Fields(), 0])
 
 em_subs = initialize_EM_variables()
+ureg = UnitRegistry()
+Q_ = ureg.Quantity
 
 EEE.<r,th,ph> = EuclideanSpace(coordinates='spherical')
 g = EEE.metric()
@@ -308,7 +310,7 @@ frame_cart = cart.frame()
 frame_cart.set_name('e_cart', latex_symbol=[r"\vu{x}", r"\vu{y}", r"\vu{z}"])
 x_hat, y_hat, z_hat = frame_cart
 
-r_vec = EEE.vector_field((r, 0, 0))
+r_vec = r*r_hat
 
 def pt_sph(r=r, th=th, ph=ph):
     return EEE((r, th, ph), chart=sph)
