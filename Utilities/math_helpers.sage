@@ -465,6 +465,12 @@ def integral_coord_region(scalar, bounds):
 
 """ EM functions (mostly from Jackson) """
 """ Spherical harmonics """
+def Y_lm_test(l=None, m=None):
+    return EEE.scalar_field(
+        sqrt((2*l + 1)*factorial(l - m)/(4*pi*factorial(l + m)))
+        * assoc_legendre(l, m, cos(th))*e^(i*m*ph)
+    )
+
 def Y_lm_jackson(l, m):
     """Y_lm_jackson.
     Spherical harmonic, with phase and normalization convention as in Jackson.
@@ -473,7 +479,10 @@ def Y_lm_jackson(l, m):
   :param l: Order (angular momentum)
   :param m: Order (magnetic)
     """
-    return EEE.scalar_field(spherical_harmonic(l, m, th, ph)*(-1)^m)
+    if l < 0 or abs(m) > l:
+        raise ValueError("The parameters (m, l) must satisfy 0 <= l and abs(m) <= abs(l)")
+    #return EEE.scalar_field(spherical_harmonic(l, m, th, ph)*(-1)^m)
+    return Y_lm_test(l, m)
 
 def L_operator(scalar):
     """L_operator.
