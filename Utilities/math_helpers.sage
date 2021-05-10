@@ -3,7 +3,7 @@ from collections import namedtuple
 from sage.manifolds.operators import *
 from sage.manifolds.catalog import Sphere
 from scipy import special as fns
-from sympy import factorial2
+from sympy import factorial2, assoc_legendre
 from pint import UnitRegistry
 from deprecation import deprecated
 import logging
