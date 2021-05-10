@@ -451,6 +451,16 @@ def integral_coord_region(scalar, bounds):
     >>> test_scalar = EEE.scalar_field(x^2 + y^2 + z^2, chart=cart)
     >>> integral_coord_region(test_scalar, cart_bounds)
     236/3
+    >>> integral_coord_region(hermitian_conjugate(X_lm_jackson(1, 0))['_i'] \
+    ...:    * X_lm_jackson(3, 2)['i'], {r: r, th: [0, pi], ph: [0, 2*pi]})
+    0
+    >>> integral_coord_region(hermitian_conjugate(X_lm_jackson(4, 2))['_i'] \
+    ...:    * (r_vec.cross(X_lm_jackson(3, -1)))['i'],
+    ...:    {r: r, th: [0, pi], ph: [0, 2*pi]})
+    0
+    >>> integral_coord_region(hermitian_conjugate(Y_lm_jackson(2, 1))*Y_lm_jackson(2, 1),
+    ...:    {r: r, th: [0, pi], ph: [0, 2*pi]})
+    r^2
     """
     manifold = scalar.domain()
     c = _get_chart(bounds.keys(), manifold)
@@ -460,7 +470,10 @@ def integral_coord_region(scalar, bounds):
         if isinstance(bound, list) or isinstance(bound, tuple):
             ret = integral(ret, var, *bound)
         else:
-            ret = ret.subs(var==bound)
+            try:
+                ret = ret.subs(var==bound)
+            except AttributeError:              # 'int' object has no attribute 'subs'
+                pass
     return ret
 
 """ EM functions (mostly from Jackson) """
