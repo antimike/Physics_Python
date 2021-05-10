@@ -1,5 +1,14 @@
 from functools import cached_property
 from collections import OrderedDict
+from collections.abc import Sequence, Mapping
+from typing import TypeVar, Union, Optional
+
+
+T = TypeVar("T")
+K = TypeVar("K")
+Coords = Sequence[T]
+NamedCoords = Sequence[K]
+Params = Mapping[K, Union[T, Coords]]
 
 
 class Direction:
@@ -14,14 +23,6 @@ class Direction:
 
     """ Private helper functions and class properties """
 
-    def _azimuth(x, y):
-        if not x * y == 0:
-            return pi / 2 * (1 - sgn(x)) + arctan(y / x)
-        elif x == 0:
-            return sgn(y) * pi / 2
-        else:
-            return pi / 2 * (1 - sgn(x))
-
     _heading_to_coords = OrderedDict(
         {
             "x": lambda th, ph: sin(th) * cos(ph),
@@ -33,19 +34,11 @@ class Direction:
     _coords_to_heading = OrderedDict(
         {
             "th": lambda x, y, z: arccos(z / sqrt(x ^ 2 + y ^ 2 + z ^ 2)),
-            "ph": lambda x, y, z: Direction._azimuth(x, y),
+            "ph": lambda x, y, z: _azimuth(x, y),
         }
     )
 
-    def _extract_labeled_tuple(d, **label_lists):
-        for name, ll in label_lists.items():
-            if len(ll.keys() & d.keys()):
-                return [d.get(k, 0) for k in ll]
-            elif (c := d.get(name)) is not None:
-                return c
-        return None
-
-    def _set_heading(self, coords):
+    def _set_heading(self, coords: Coords) -> None:
         if len(coords) == 2:
             self._heading = tuple(coords)
         elif len(coords) == 3:
@@ -64,7 +57,7 @@ class Direction:
 
     """ Constructor """
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Params) -> None:
         """class Direction: constructor
 
         :kwargs: Keywords specifying either the Cartesian coordinates of a vector parallel to the desired direction or the colatitude / longitude of the corresponding unit vector.
@@ -89,10 +82,11 @@ class Direction:
         (0, 3*pi)
         """
         self._set_heading(
-            Direction._extract_labeled_tuple(
+            _extract_labeled_tuple(
                 kwargs,
-                coords=Direction._heading_to_coords,
-                heading=Direction._coords_to_heading,
+                0,
+                coords=Direction._heading_to_coords.keys(),
+                heading=Direction._coords_to_heading.keys(),
             )
         )
 
@@ -114,6 +108,41 @@ class Direction:
         """
         return self._heading
 
-if __name__ == "__main__":
-    import doctest
-    doctest.testmod()
+
+def _azimuth(x, y):
+    """_azimuth.
+    Returns the azimuthal angle corresponding to the point (x, y)
+
+    :param x: Abcissa
+    :param y: Ordinate
+    """
+    if not x * y == 0:
+        return pi / 2 * (1 - sgn(x)) + arctan(y / x)
+    elif x == 0:
+        return sgn(y) * pi / 2
+    else:
+        return pi / 2 * (1 - sgn(x))
+
+
+def _extract_labeled_tuple(
+    d: Params, default: T, **key_lists: Mapping[K, NamedCoords]
+) -> Optional[Coords]:
+    """_extract_labeled_tuple.
+    Returns an ordered tupple taken from `d` whose elements correspond to the keys of one of the `key_lists`.
+
+    :param d: Inputs to extract labeled tuple from
+    :param default: Default value for keys not found in d
+    :param key_lists: Named lists of keys, e.g., heading=['th', 'ph']
+    """
+    for name, ll in key_lists.items():
+        if len(ll & d.keys()):
+            return [d.get(k, default) for k in ll]
+        elif (c := d.get(name)) is not None:
+            return c
+    return None
+
+
+#if __name__ == "__main__":
+    #import doctest
+
+    #doctest.testmod()
