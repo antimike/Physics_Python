@@ -702,7 +702,7 @@ def H_lm_E_long_wavelength_expanded(l, m, a, E=None, k=k, Z_0=Z_0):
   :param Z_0: (Optional) wave impedance.  If not provided, the variable 'Z_0' is used.
     """
     if E is None:
-        E = E_lm_E_long_wavelength(l, m, a, k=k, Z_0=Z_0)
+        E = E_lm_E_long_wavelength_expanded(l, m, a, k=k, Z_0=Z_0)
     return -i/(k*Z_0)*curl(E)
 
 def multipole_fields_lm(l, m, A_E_outgoing, A_M_outgoing,
