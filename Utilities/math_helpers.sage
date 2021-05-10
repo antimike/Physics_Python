@@ -661,6 +661,35 @@ def M_lm_intrinsic(l, m, magnetization, bounds):
         r^l*apply_to(conjugate, Y_lm_jackson(l, m))*div(magnetization), bounds)
 
 """ Fields """
+def H_from_A_free_space(A):
+    """H_from_A_free_space.
+    Returns the magnetic field H of a vector potential A in free space
+
+    :param A: Vector potential
+    """
+    return curl(A)/mu_0
+
+def E_from_A_free_space(A, H=None):
+    """E_from_A_free_space.
+    Computes E from a vector potential A in free space
+
+    :param A: Vector potential
+    :param H (optional): Magnetic field, to be provided if already computed
+    """
+    if H is None:
+        H = H_from_A_free_space(A)
+    return i*Z_0/k*curl(H)
+
+def E_dipole_fields(moment):
+    """E_dipole_fields.
+    Returns the E and H fields of a dipole oriented along z_hat with the given moment
+
+    :param moment: Electric dipole moment.  UNITS: Same as H
+    """
+    A = (-i*mu_0*k*c*e^(i*k*r)*moment/(4*pi*r)*z_hat)
+    H = H_from_A_free_space(A)
+    return Fields(E=E_from_A_free_space(A, H), H=H)
+
 @_catch_NameError
 def E_lm_E_long_wavelength_expanded(l, m, a, k=k, Z_0=Z_0):
     """E_lm_E_long_wavelength.
