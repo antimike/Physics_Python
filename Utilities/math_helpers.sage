@@ -6,6 +6,7 @@ from scipy import special as fns
 from sympy import factorial2, assoc_legendre
 from pint import UnitRegistry
 from deprecation import deprecated
+from typing import Optional
 import logging
 
 sys.path.append('/home/user/Documents/Python')
@@ -658,11 +659,13 @@ def E_from_A_free_space(A, H=None):
         H = H_from_A_free_space(A)
     return i*Z_0/k*curl(H)
 
-def E_dipole_fields(moment):
+def E_dipole_fields(moment, direction: Optional[Direction] = None) -> Fields:
     """E_dipole_fields.
     Returns the E and H fields of a dipole oriented along z_hat with the given moment
 
     :param moment: Electric dipole moment.  UNITS: Same as H
+
+    >>> 
     """
     A = (-i*mu_0*k*c*e^(i*k*r)*moment/(4*pi*r)*z_hat)
     H = H_from_A_free_space(A)
