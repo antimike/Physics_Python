@@ -432,11 +432,11 @@ def _hermitian_conjugate_vector(vector):
             ret.add_comp(chart.frame())[j] = conjugate(vector.comp(chart.frame())[j].expr() + 0*i)
     return ret
 
-def vector_complex_norm_squared(v):
-    """vector_complex_norm_squared.
+def _vector_complex_norm(v):
+    """_vector_complex_norm.
     Returns the norm-squared of a vector field with complex components, as a scalar field on the same manifold.
 
-  :param v: Vector field to find norm of
+    :param v: Vector field to find norm of
     """
     return apply_to(conjugate, v)['_i']*v['i']
 
@@ -729,7 +729,7 @@ def multipole_power_cross_section_pure(l, m, a, k=k, Z_0=Z_0):
     :param k: (Optional) wavevector of radiation.  If not provided, the variable 'k' is used.
     :param Z_0: (Optional) wave impedance.  If not provided, the variable 'Z_0' is used.
     """
-    return Z_0/(2*k^2)*norm(a + 0*i)*vector_complex_norm_squared(X_lm_jackson(l, m))
+    return Z_0/(2*k^2)*norm(a + 0*i)*complex_norm(X_lm_jackson(l, m))
 
 @_catch_NameError
 def multipole_power_cross_section(multipoles, k=k, Z_0=Z_0):
