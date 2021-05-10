@@ -526,20 +526,31 @@ def spherical_wavefront(l, outgoing, incoming, k=k):
     :param outgoing: Coefficient of h_l^1(kr)
     :param incoming: Coefficient of h_l^2(kr)
     :param k: (Optional) wavevector of radiation.  If not provided, the variable 'k' is used.
+
+    >>> _l, _out, _in = (2, 1, 0)
+    >>> wavefront = spherical_wavefront(_l, _out, _in)
+    >>> wavefront.display(chart=sph)
+    E^3 --> R
+    (r, th, ph) |--> spherical_hankel1(2, k*r)
+    >>> wavefront(pt_sph())
     """
-    return outgoing*spherical_hankel1(l, k*r) + incoming*spherical_hankel2(l, k*r)
+    return EEE.scalar_field(outgoing*spherical_hankel1(l, k*r) + incoming*spherical_hankel2(l, k*r))
 
 """ Multipole moments """
 @_catch_NameError
 def a_lm_E_long_wavelength(l, m, Q_static, Q_induced=0):
     """a_lm_E_long_wavelength.
     Compute the multipole coefficients a_lm^E as a function of l, m, and the static and induced moments Q and Q_induced.
-  See Jackson 9.169.
+    Valid in the limit kr << 1.
+    See Jackson 9.169.
 
-  :param l: Order of the multipole (angular momentum)
-  :param m: Order of the multipole (magnetic)
-  :param Q_static: Static multipole moment.  Should include the induced multipole moment due to magnetic induction.
-  :param Q_induced: Electric multipole moment due to magnetic induction (default = 0)
+    :param l: Order of the multipole (angular momentum)
+    :param m: Order of the multipole (magnetic)
+    :param Q_static: Static multipole moment.  Should include the induced multipole moment due to magnetic induction.
+    :param Q_induced: Electric multipole moment due to magnetic induction (default = 0)
+
+    >>> a_lm_E_long_wavelength(2, 1, 1)
+    -1/15*I*sqrt(3/2)*c*k^4
     """
     return c*k^(l + 2)/(i*factorial2(2*l + 1))*sqrt((l + 1)/l)*(Q_static + Q_induced)
 
@@ -547,7 +558,8 @@ def a_lm_E_long_wavelength(l, m, Q_static, Q_induced=0):
 def a_lm_M_long_wavelength(l, m, M_current, M_intrinsic):
     """a_lm_M_long_wavelength.
     Compute the multipole coefficients a_lm^E as a function of l, m, and the magnetic moments corresponding to currents (M_current) and intrinsic magnetization (M_intrinsic).
-  See Jackson 9.171.
+    Valid in the limit kr << 1.
+    See Jackson 9.171.
 
     :param l: Order of the multipole (angular momentum)
     :param m: Order of the multipole (magnetic)
@@ -565,57 +577,26 @@ def E_wavefront_lm(l, m, E):
     :param m: Order of the multipole (magnetic)
     :param E: Electric field
 
-    >>> # This is necessary because Sage has trouble telling when expressions involving Hankel fns are equal
-    >>> # Obviously this works best for functions of r alone
-    >>> # The next testing fn can be used more generally but depends on `integral_coord_region`
-    >>> def test_equality_radial(qty1, qty2, r_min=0, r_max=10):
-    ...:    exprs = [complex_norm_squared(qty1 - qty2)(pt_sph()), 1 - complex_norm_squared(qty1/qty2)(pt_sph())]
-    ...:    ret = None
-    ...:    while not ret and len(exprs) > 0:
-    ...:        try:
-    ...:            ret = integral(exprs.pop(), r, r_min, r_max).subs(k==1).is_trivial_zero()
-    ...:        except:
-    ...:            continue
-    ...:    if ret is None:
-    ...:        raise ValueError("Evaluation of the comparison integrals failed for the quantities %s and %s" \
-    ...:            %(qty1, qty2))
-    ...:    return ret
-    >>> def test_equality_general(qty1, qty2, bounds={r: [0, 10], th: th, ph: ph}):
-    ...:    exprs = [complex_norm_squared(qty1 - qty2), 1 - complex_norm_squared(qty1/qty2)]
-    ...:    ret = False
-    ...:    while not ret and len(exprs) > 0:
-    ...:        try:
-    ...:            ret = integral_coord_region(exprs.pop(), bounds).subs(k==1).is_trivial_zero()
-    ...:        except:
-    ...:            continue
-    ...:    if ret is None:
-    ...:        raise ValueError("Evaluation of the comparison integrals failed for the quantities %s and %s" \
-    ...:            %(qty1, qty2))
-    ...:    return ret
-    >>> _l, _m = (1, 0)
-    >>> _out, _in = (1, 0)
+    >>> _l, _m, _out, _in = (1, 0, 1, 0)
     >>> f_l = spherical_wavefront(_l, _out, _in)
-    >>> H = f_l*L_operator(Y_lm_jackson(_l, _m))      # From Jackson 9.118 (pure-electric multipole)
+    >>> H = f_l*X_lm_jackson(_l, _m)
     >>> E = i*Z_0/k*curl(H)
     >>> wavefront = E_wavefront_lm(_l, _m, E)
     >>> test_equality_radial(f_l, wavefront, r_min=1, r_max=10)
+    True
     >>> test_equality_general(f_l, wavefront, bounds={r: [2, 10], th: th, ph: ph})
+    True
     >>> wavefront.display(chart=sph)
     E^3 --> R
-    (r, th, ph) |--> -1/3*(3*Z_0*k*r + 3*I*Z_0)*e^(I*k*r)/(Z_0*k^2*r^2)
-    >>> f_l_confirm = -k/Z_0/(_l*(_l+1))/Y_lm_jackson(_l, _m)*r_vec.dot(E)      # See Jackson 9.117 (defn. of f_l in terms of r.E)
-    >>> f_l_confirm.display(chart=sph)
-    E^3 --> R
-    (r, th, ph) |--> -(k*r + I)*e^(I*k*r)/(k^2*r^2)
-    >>> (f_l_confirm - f_l)(pt_sph()).simplify()
-    0
+    (r, th, ph) |--> -1/6*sqrt(2)*(3*sqrt(2)*Z_0*k*r + 3*I*sqrt(2)*Z_0)*e^(I*k*r)/(Z_0*k^2*r^2)
     """
     # Note the division by r^2, since we're integrating against d\Omega
     # See implementation of `integral_coord_region`
     # TODO: Fix this in a better way
     # Also note the factor of l(l+1), as opposed to Jackson's sqrt(l(l+1))...possible typo in Jackson
     # TODO: Check this
-    return -k/Z_0/r^2/(l*(l+1))*EEE.scalar_field(
+    # DONE: Checked, Jackson's right :(
+    return -k/Z_0/r^2/sqrt(l*(l+1))*EEE.scalar_field(
         integral_coord_region(
             apply_to(conjugate, Y_lm_jackson(l, m))*r_vec.dot(E),
             {r: r, th: [0, pi], ph: [0, 2*pi]}
@@ -731,6 +712,49 @@ def multipole_fields_lm(l, m, A_E_outgoing, A_M_outgoing,
     :param A_M_incoming: Incoming magnetic moment (default = 0)
     :param k: (Optional) wavevector of radiation.  If not provided, the variable 'k' is used.
     :param Z_0: (Optional) wave impedance.  If not provided, the variable 'Z_0' is used.
+
+    >>> l=1: 'fields' off by factor of sqrt(2); 'exp_fields' off by overall minus sign
+    >>> A_electric_dipole = -i*mu_0*omega/(4*pi)*e^(i*k*r)/r*z_hat          # Potential of a dipole with unit moment
+    >>> def get_outgoing_wavefront_from_field(l, m, E):
+    ...:    return -k/Z_0/sqrt(l*l+1) * integral_coord_region(_conjugate_scalar(Y_lm_jackson(l, m))*r*r_hat.dot(E),
+    ...:        {th: [0, pi], ph: [0, 2*pi], r: 1})
+    >>> @cache
+    ...: def run_test_case(_l, _m, _A_E_out, _A_M_out):
+    ...:    fields = multipole_fields_lm(_l, _m, _A_E_out, _A_M_out)
+    ...:    exp_fields = Fields(
+    ...:        E=E_lm_E_long_wavelength_expanded(_l, _m, _A_E_out),
+    ...:        H=H_lm_E_long_wavelength_expanded(_l, _m, _A_E_out)
+    ...:    )
+    ...:    return {
+    ...:        'q_numbers': (_l, _m),
+    ...:        'fields': fields,
+    ...:        'exp_fields': exp_fields,
+    ...:        'wavefronts': {
+    ...:            'fields': E_wavefront_lm(_l, _m, fields.E),
+    ...:            'exp_fields': E_wavefront_lm(_l, _m, exp_fields.E),
+    ...:            'expected': spherical_wavefront(_l, _A_E_out, 0)
+    ...:        }
+    ...:    }
+    >>> test_cases = [[1, 0, 1, 0], [2, 0, 1, 0], [1, 1, 1, 0], [1, 2, 1, 0]]
+    >>> results = (run_test_case(*L) for L in test_cases)
+    >>> res = next(results)
+    >>> test_equality_radial(res['wavefronts']['expected'], res['wavefronts']['fields'])
+    >>> l, m, A_E_out, A_M_out = (2, 1, 5, 4)
+    >>> (fields.E - E_exp).dot(r_hat).display()
+    >>> r_hat.dot(fields.E).display()
+    >>> r_hat.dot(fields.H)(pt_sph(r, th, ph))
+    >>> test = -k/Z_0/sqrt(l*(l+1)) * integral_coord_region(_conjugate_scalar(Y_lm_jackson(l, m))*r*r_hat.dot(fields.E),
+    ...:    {th: [0, pi], ph: [0, 2*pi], r: 1})
+    >>> expect = spherical_wavefront(l, A_E_out, 0).subs(r=1)
+    >>> (test - expect).subs(k=1, Z_0=1)
+    >>> get_outgoing_wavefront_from_field(l, m, fields.E)
+    >>> spherical_wavefront(l, A_E_out, 0).subs(r=1)
+    >>> get_outgoing_wavefront_from_field(l, m, E_exp)
+    >>> l_, m_, A_E_, A_M_ = (2, 0, 5, 0)
+    >>> fields_ = multipole_fields_lm(l_, m_, A_E_, A_M_)
+    >>> test_ = get_outgoing_wavefront_from_field(l_, m_, fields_.E).subs(Z_0=1, k=1)
+    >>> expect_ = spherical_wavefront(l_, A_E_, 0).subs(k=1, r=1).simplify()
+    >>> (test_ - expect_).expand()      # This should vanish
     """
     a_E_f_l = spherical_wavefront(l, A_E_outgoing, A_E_incoming)
     a_M_g_l = spherical_wavefront(l, A_M_outgoing, A_M_incoming)
@@ -792,3 +816,49 @@ def scalar_potential_azimuthal(A, B):
     return EEE.scalar_field(sum(
         ((a*r^l + b/r^(l + 1))*legendre_P(l, cos(th)) for l, (a, b) in enumerate(zip(A, B)))
     ))
+
+""" Testing and debugging """
+# This is necessary because Sage has trouble telling when expressions involving Hankel fns are equal
+# Obviously this works best for functions of r alone
+# The next testing fn can be used more generally but depends on `integral_coord_region`
+# TODO: Use `expression` class's `test_relation`
+def test_equality_radial(qty1, qty2, r_min=0, r_max=10):
+    """test_equality_radial.
+    Tests equality of two expressions by integrating the absolute square of their difference radially.
+
+    :param qty1: First expression to test
+    :param qty2: Second expression to test
+    """
+    exprs = [complex_norm(qty1 - qty2).expr(), 1 - complex_norm(qty1/qty2).expr()]
+    ret = None
+    while not ret and len(exprs) > 0:
+        try:
+            ret = integral(exprs.pop(), r, r_min, r_max).subs(k==1).is_trivial_zero()
+        except:
+            continue
+    if ret is None:
+        raise ValueError("Evaluation of the comparison integrals failed for the quantities %s and %s" \
+            %(qty1, qty2))
+    return ret
+
+def test_equality_general(qty1, qty2, bounds={r: [0, 10], th: th, ph: ph}):
+    """test_equality_general.
+    Tests equality of two expressions by integrating the absolute square of their difference over a supplied region.
+
+    :param qty1: First expression to test
+    :param qty2: Second expression to test
+    """
+    exprs = [complex_norm(qty1 - qty2), 1 - complex_norm(qty1/qty2)]
+    ret = False
+    while not ret and len(exprs) > 0:
+        try:
+            ret = integral_coord_region(exprs.pop(), bounds).subs(k==1).is_trivial_zero()
+        except:
+            continue
+    if ret is None:
+        raise ValueError("Evaluation of the comparison integrals failed for the quantities %s and %s" \
+            %(qty1, qty2))
+    return ret
+
+""" Units """
+# TODO: Implement some helpers / decorators here?
