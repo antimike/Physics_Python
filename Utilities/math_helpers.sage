@@ -8,8 +8,9 @@ from pint import UnitRegistry
 from deprecation import deprecated
 import logging
 
-sys.path.append('/home/user/Documents/Python/Utilities')
-import debugger as debg
+sys.path.append('/home/user/Documents/Python')
+import Utilities.debugger as debg
+from Utilities.sage_helpers.direction import Direction
 
 """ Helpers and decorators """
 @debg.debug(alias='dbg',
@@ -501,7 +502,6 @@ def X_lm_jackson(l, m):
     """
     return 1/sqrt(l*(l+1))*L_operator(Y_lm_jackson(l, m))
 
-@_catch_NameError
 def spherical_wavefront(l, outgoing, incoming, k=k):
     """spherical_wavefront.
     Returns a scalar field describing a spherical wavefront with specified outgoing and incoming coefficients.  Outgoing corresponds to h_l^1(kr), incoming to h_l^2(kr).
