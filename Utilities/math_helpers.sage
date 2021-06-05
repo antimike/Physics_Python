@@ -537,7 +537,7 @@ def a_lm_E_long_wavelength(l, m, Q_static, Q_induced=0):
     >>> a_lm_E_long_wavelength(2, 1, 1)
     -1/15*I*sqrt(3/2)*c*k^4
     """
-    return c*k^(l + 2)/(i*factorial2(2*l + 1))*sqrt((l + 1)/l)*(Q_static + Q_induced)
+    return c*k^(l + 2)/(i*factorial2(2*l + 1))*sqrt((l + 1)/l)*(Q_static + Q_induced) if l != 0 else 0
 
 def a_lm_M_long_wavelength(l, m, M_current, M_intrinsic):
     """a_lm_M_long_wavelength.
@@ -550,7 +550,7 @@ def a_lm_M_long_wavelength(l, m, M_current, M_intrinsic):
     :param M_current: Magnetic multipole moment due to current
     :param M_intrinsic: Magnetic multipole moment due to intrinsic magnetization
     """
-    return i*k^(l+2)/factorial2(2*l+1)*sqrt((l+1)/l)*(M_current + M_intrinsic)
+    return i*k^(l+2)/factorial2(2*l+1)*sqrt((l+1)/l)*(M_current + M_intrinsic) if l != 0 else 0
 
 def E_wavefront_lm(l, m, E):
     """E_wavefront_lm.
