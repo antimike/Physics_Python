@@ -1,2 +1,4 @@
 get-crossref-data.log
 te -q
+Utilities/__pycache__/constants.cpython-39.pyc
+*.pyc
